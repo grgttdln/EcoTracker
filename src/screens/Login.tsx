@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { 
-  TextInput, 
-  Text, 
-  View, 
-  StyleSheet, 
+import React, {useState} from 'react';
+import {
+  TextInput,
+  Text,
+  View,
+  StyleSheet,
   TouchableOpacity,
   Pressable,
   ImageBackground,
@@ -12,11 +12,12 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
+import AntIcon from 'react-native-vector-icons/AntDesign';
 
 const backgroundImage = require('../assets/square_small.png');
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
-const Login = ({ navigation }: any) => {
+const Login = ({navigation}: any) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -25,88 +26,85 @@ const Login = ({ navigation }: any) => {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-    >
-     
-        <ImageBackground 
-          source={backgroundImage} 
-          style={styles.backgroundImage}
-          resizeMode="cover"
-        >
-          <View style={styles.contentWrapper}>
-            {/* Title Section */}
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>EcoTrack</Text>
-              <Text style={styles.subtitle}>
-                Your Personal Guide to a Greener Future: Track, Reduce, and Transform Your Carbon Footprint with Ease
-              </Text>
-            </View>
-
-            {/* Form Section */}
-            <View style={styles.formContainer}>
-              <Text style={styles.label}>E-MAIL</Text>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="Enter your e-mail"
-                  style={styles.input}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-                {email.length > 0 && (
-                  <TouchableOpacity 
-                    style={styles.clearButton}
-                    onPress={() => setEmail('')}
-                  >
-                    <Text style={styles.clearButtonText}>×</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              <Text style={styles.label}>PASSWORD</Text>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Enter your password"
-                  secureTextEntry
-                  style={styles.input}
-                  autoCapitalize="none"
-                />
-                {password.length > 0 && (
-                  <TouchableOpacity 
-                    style={styles.clearButton}
-                    onPress={() => setPassword('')}
-                  >
-                    <Text style={styles.clearButtonText}>×</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                <Text style={styles.createAccount}>
-                  Don't have an account? Let's create one!
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Login Button - Inside ScrollView to scroll with content */}
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                <Text style={styles.loginButtonText}>Log In</Text>
-              </TouchableOpacity>
-            </View>
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+      <ImageBackground
+        source={backgroundImage}
+        style={styles.backgroundImage}
+        resizeMode="cover">
+        <View style={styles.contentWrapper}>
+          {/* Title Section */}
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>EcoTrack</Text>
+            <Text style={styles.subtitle}>
+              Your Personal Guide to a Greener Future: Track, Reduce, and
+              Transform Your Carbon Footprint with Ease
+            </Text>
           </View>
-        </ImageBackground>
-     
+
+          {/* Form Section */}
+          <View style={styles.formContainer}>
+            <Text style={styles.label}>E-MAIL</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Enter your e-mail"
+                style={styles.input}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              {email.length > 0 && (
+                <TouchableOpacity
+                  style={styles.clearButton}
+                  onPress={() => setEmail('')}>
+                  <Text style={styles.clearButtonText}>×</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <Text style={styles.label}>PASSWORD</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Enter your password"
+                secureTextEntry
+                style={styles.input}
+                autoCapitalize="none"
+              />
+              {password.length > 0 && (
+                <TouchableOpacity
+                  style={styles.clearButton}
+                  onPress={() => setPassword('')}>
+                  <Text style={styles.clearButtonText}>×</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+              <Text style={styles.createAccount}>
+                Don't have an account? Let's create one!
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Login Button - Inside ScrollView to scroll with content */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+              <Text style={styles.loginButtonText}>Log In</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ImageBackground>
 
       {/* Back Button - Outside ScrollView to stay fixed */}
-      <Pressable style={styles.backButton} onPress={() => navigation.navigate('Welcome')}>
-        <Text style={styles.backButtonText}>←</Text>
+      <Pressable
+        style={styles.backButton}
+        onPress={() => navigation.navigate('Welcome')}>
+        <AntIcon name="left" size={24} color="#79A065" />
       </Pressable>
     </KeyboardAvoidingView>
   );
@@ -141,41 +139,43 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#000',
     borderRadius: 12,
-    justifyContent: 'center', 
+    justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
     display: 'flex',
   },
-  
+
   backButtonText: {
     fontSize: 24,
-    textAlign: 'center', 
-    lineHeight: 20, 
-    margin: 0, 
-    color: "#79A065"
+    textAlign: 'center',
+    lineHeight: 20,
+    margin: 0,
+    color: '#79A065',
   },
-  
+
   titleContainer: {
     marginBottom: 40,
   },
   title: {
     fontSize: 50,
-    fontWeight: '900',
+    fontFamily: 'Poppins-Bold',
     color: '#000000',
-    marginVertical: 10,
+    marginVertical: 6,
   },
   subtitle: {
     fontSize: 18,
     fontWeight: '500',
     color: '#000000',
+    fontFamily: 'Poppins-Medium',
   },
   formContainer: {
     marginTop: 28,
   },
   label: {
     fontSize: 14,
-    fontWeight: 'bold',
+
     marginBottom: 8,
+    fontFamily: 'Poppins-Bold',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -200,6 +200,7 @@ const styles = StyleSheet.create({
     color: '#000',
     textAlign: 'left',
     fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   buttonContainer: {
     marginTop: 'auto',
@@ -215,6 +216,7 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 18,
     fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
 });
 

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { 
-  TextInput, 
-  Text, 
-  View, 
-  StyleSheet, 
+import React, {useState} from 'react';
+import {
+  TextInput,
+  Text,
+  View,
+  StyleSheet,
   TouchableOpacity,
   Pressable,
   ImageBackground,
@@ -12,11 +12,12 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
+import AntIcon from 'react-native-vector-icons/AntDesign';
 
 const backgroundImage = require('../assets/square_small.png');
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
-const Signup = ({ navigation }: any) => {
+const Signup = ({navigation}: any) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -27,30 +28,26 @@ const Signup = ({ navigation }: any) => {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-    >
-
-<ScrollView 
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         bounces={false}
-        showsVerticalScrollIndicator={false}
-      >
-     
-        <ImageBackground 
-          source={backgroundImage} 
+        showsVerticalScrollIndicator={false}>
+        <ImageBackground
+          source={backgroundImage}
           style={styles.backgroundImage}
-          resizeMode="cover"
-        >
+          resizeMode="cover">
           <View style={styles.contentWrapper}>
             {/* Title Section */}
             <View style={styles.titleContainer}>
               <Text style={styles.title}>EcoTrack</Text>
               <Text style={styles.subtitle}>
-                Your Personal Guide to a Greener Future: Track, Reduce, and Transform Your Carbon Footprint with Ease
+                Your Personal Guide to a Greener Future: Track, Reduce, and
+                Transform Your Carbon Footprint with Ease
               </Text>
             </View>
 
@@ -67,10 +64,9 @@ const Signup = ({ navigation }: any) => {
                   autoCapitalize="none"
                 />
                 {email.length > 0 && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.clearButton}
-                    onPress={() => setEmail('')}
-                  >
+                    onPress={() => setEmail('')}>
                     <Text style={styles.clearButtonText}>×</Text>
                   </TouchableOpacity>
                 )}
@@ -87,10 +83,9 @@ const Signup = ({ navigation }: any) => {
                   autoCapitalize="none"
                 />
                 {password.length > 0 && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.clearButton}
-                    onPress={() => setPassword('')}
-                  >
+                    onPress={() => setPassword('')}>
                     <Text style={styles.clearButtonText}>×</Text>
                   </TouchableOpacity>
                 )}
@@ -107,16 +102,15 @@ const Signup = ({ navigation }: any) => {
                   autoCapitalize="none"
                 />
                 {confirmPassword.length > 0 && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.clearButton}
-                    onPress={() => setConfirmPassword('')}
-                  >
+                    onPress={() => setConfirmPassword('')}>
                     <Text style={styles.clearButtonText}>×</Text>
                   </TouchableOpacity>
                 )}
               </View>
 
-              <Text style={styles.label}>WHAT SHOULD WE CALL YOU</Text>
+              <Text style={styles.label}>WHAT SHOULD WE CALL YOU?</Text>
               <View style={styles.inputContainer}>
                 <TextInput
                   value={username}
@@ -127,10 +121,9 @@ const Signup = ({ navigation }: any) => {
                   autoCapitalize="none"
                 />
                 {username.length > 0 && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.clearButton}
-                    onPress={() => setUsername('')}
-                  >
+                    onPress={() => setUsername('')}>
                     <Text style={styles.clearButtonText}>×</Text>
                   </TouchableOpacity>
                 )}
@@ -143,22 +136,23 @@ const Signup = ({ navigation }: any) => {
               </TouchableOpacity>
             </View>
 
-            
-
             {/* Login Button - Inside ScrollView to scroll with content */}
             <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={handleLogin}>
                 <Text style={styles.loginButtonText}>Sign Up</Text>
               </TouchableOpacity>
             </View>
           </View>
         </ImageBackground>
-        </ScrollView>
-     
+      </ScrollView>
 
       {/* Back Button - Outside ScrollView to stay fixed */}
-      <Pressable style={styles.backButton} onPress={() => navigation.navigate('Welcome')}>
-        <Text style={styles.backButtonText}>←</Text>
+      <Pressable
+        style={styles.backButton}
+        onPress={() => navigation.navigate('Welcome')}>
+        <AntIcon name="left" size={24} color="#79A065" />
       </Pressable>
     </KeyboardAvoidingView>
   );
@@ -193,41 +187,43 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#000',
     borderRadius: 12,
-    justifyContent: 'center', 
+    justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
     display: 'flex',
   },
-  
+
   backButtonText: {
     fontSize: 24,
-    textAlign: 'center', 
-    lineHeight: 20, 
-    margin: 0, 
-    color: "#79A065"
+    textAlign: 'center',
+    lineHeight: 20,
+    margin: 0,
+    color: '#79A065',
   },
-  
+
   titleContainer: {
     marginBottom: 40,
   },
   title: {
     fontSize: 50,
-    fontWeight: '900',
+    fontFamily: 'Poppins-Bold',
     color: '#000000',
-    marginVertical: 10,
+    marginVertical: 6,
   },
   subtitle: {
     fontSize: 18,
     fontWeight: '500',
     color: '#000000',
+    fontFamily: 'Poppins-Medium',
   },
   formContainer: {
     marginTop: 28,
   },
   label: {
     fontSize: 14,
-    fontWeight: 'bold',
+
     marginBottom: 8,
+    fontFamily: 'Poppins-Bold',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -252,6 +248,7 @@ const styles = StyleSheet.create({
     color: '#000',
     textAlign: 'left',
     fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
   buttonContainer: {
     marginTop: 'auto',
@@ -267,6 +264,7 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 18,
     fontWeight: '500',
+    fontFamily: 'Poppins-Medium',
   },
 });
 
