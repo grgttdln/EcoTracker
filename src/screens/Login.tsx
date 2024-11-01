@@ -16,7 +16,7 @@ import {
 import AntIcon from 'react-native-vector-icons/AntDesign';
 import auth from '@react-native-firebase/auth';
 
-const backgroundImage = require('../assets/square_small.png');
+const backgroundImage = require('../assets/images/square_small.png');
 const {width, height} = Dimensions.get('window');
 
 const Login = ({navigation}: any) => {
@@ -237,7 +237,6 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-
     marginBottom: 8,
     fontFamily: 'Poppins-Bold',
   },

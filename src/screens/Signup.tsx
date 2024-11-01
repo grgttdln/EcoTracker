@@ -18,7 +18,10 @@ import AntIcon from 'react-native-vector-icons/AntDesign';
 import auth from '@react-native-firebase/auth';
 import NetInfo from '@react-native-community/netinfo';
 
-const backgroundImage = require('../assets/square_small.png');
+import firebase from '../config/firebaseConfig';
+import firestore from '@react-native-firebase/firestore';
+
+const backgroundImage = require('../assets/images/square_small.png');
 const {width, height} = Dimensions.get('window');
 
 const Signup = ({navigation}: any) => {
@@ -28,6 +31,9 @@ const Signup = ({navigation}: any) => {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+
+  
 
   const validateInputs = () => {
     if (!email || !password || !confirmPassword || !username) {
@@ -52,6 +58,33 @@ const Signup = ({navigation}: any) => {
     }
 
     return true;
+  };
+
+
+  const AddUser = async () => {
+    
+    console.log('Firebase config:', firebase.app().options);
+    try {
+      await firestore()
+        .collection('UserInfo')
+        .doc(username) 
+        .set({
+          email: email,
+        });
+
+        await firestore()
+        .collection('UserMain')
+        .doc(username) // Specify the document ID
+        .set({
+          coins: "10",
+          level: "1",
+        });
+
+      
+      console.log('User added!');
+    } catch (error) {
+      console.error('Error adding user: ', error);
+    }
   };
 
   const checkNetwork = async () => {
@@ -87,6 +120,8 @@ const Signup = ({navigation}: any) => {
           displayName: username,
         });
       }
+
+      await AddUser();
 
       Alert.alert('Success', 'Your account has been created successfully!', [
         {

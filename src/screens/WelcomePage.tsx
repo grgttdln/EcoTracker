@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
-const backgroundImage = require('../assets/bg.png');
+const backgroundImage = require('../assets/images/bg.png');
 
 const WelcomePage = ({navigation}: any) => {
   return (
