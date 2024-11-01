@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View, Image } from 'react-native';
+import {StyleSheet, Text, View, Image} from 'react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 
 const coin = require('../assets/images/coin.png');
 const level = require('../assets/images/level_bg.png');
@@ -17,21 +17,24 @@ const UserHeader = () => {
     const subscriber = firestore()
       .collection('UserMain')
       .doc(currentUser.displayName) // Use uid to fetch the document
-      .onSnapshot(documentSnapshot => {
-        if (documentSnapshot.exists) {
-          setStats({
-            ...documentSnapshot.data(),
-            key: documentSnapshot.id,
-          });
-        } else {
-          console.log('User does not exist!');
-        }
-        console.log('User data: ', documentSnapshot.data());
-        setLoading(false); // Set loading to false after fetching data
-      }, error => {
-        console.error("Error fetching user data: ", error);
-        setLoading(false); // Handle loading state on error
-      });
+      .onSnapshot(
+        documentSnapshot => {
+          if (documentSnapshot.exists) {
+            setStats({
+              ...documentSnapshot.data(),
+              key: documentSnapshot.id,
+            });
+          } else {
+            console.log('User does not exist!');
+          }
+          console.log('User data: ', documentSnapshot.data());
+          setLoading(false); // Set loading to false after fetching data
+        },
+        error => {
+          console.error('Error fetching user data: ', error);
+          setLoading(false); // Handle loading state on error
+        },
+      );
 
     return () => subscriber();
   }, [currentUser?.uid]); // Add currentUser.uid as a dependency
@@ -46,26 +49,25 @@ const UserHeader = () => {
         <View style={styles.profileSection}>
           <View style={styles.avatarCircle} />
           <View style={styles.textContainer}>
-            <Text style={styles.greeting}>{`Hi, ${currentUser?.displayName}`}</Text>
-            <Text style={styles.subtext}>Keep pushing on!</Text>
+            <Text
+              style={
+                styles.greeting
+              }>{`Hi, ${currentUser?.displayName}.`}</Text>
+            <Text style={styles.subtext}>Eco Starts Here!</Text>
           </View>
         </View>
 
         <View style={styles.statsSection}>
           <View style={styles.statContainer}>
-            <Image 
-              source={coin} 
-              style={styles.statIcon} 
-            />
-            <Text style={styles.statValue}>{stats.coins}</Text> {/* Use stats */}
+            <Image source={coin} style={styles.statIcon} />
+            <Text style={styles.statValue}>{stats.coins}</Text>{' '}
+            {/* Use stats */}
           </View>
 
           <View style={styles.levelContainer}>
-            <Text style={styles.levelValue}>{stats.level}</Text> {/* Use stats */}
-            <Image 
-              source={level} 
-              style={styles.levelIcon} 
-            />
+            <Text style={styles.levelValue}>{stats.level}</Text>{' '}
+            {/* Use stats */}
+            <Image source={level} style={styles.levelIcon} />
           </View>
         </View>
       </View>
@@ -78,14 +80,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingVertical: 16,
     paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   mainContent: {
     flexDirection: 'row',
@@ -106,15 +100,17 @@ const styles = StyleSheet.create({
     borderColor: '#EAEAEA',
   },
   textContainer: {
-    gap: 0,  
+    gap: 0,
+    marginLeft: 8,
   },
   greeting: {
     fontSize: 20,
     fontWeight: '600',
     color: '#000000',
+    fontFamily: 'Poppins-Medium',
   },
   subtext: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#79A065',
     fontFamily: 'Poppins-Regular',
   },

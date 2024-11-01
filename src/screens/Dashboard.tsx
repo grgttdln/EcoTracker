@@ -1,14 +1,14 @@
-import { StyleSheet, Text, View } from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 import React from 'react';
 import UserHeader from '../components/UserHeader';
-import auth from '@react-native-firebase/auth'; 
+import auth from '@react-native-firebase/auth';
 
 const Dashboard = () => {
   const currentUser = auth().currentUser;
 
   return (
-    <View>
-      <UserHeader username={currentUser?.displayName} /> {/* Pass username if needed */}
+    <View style={styles.container}>
+      <UserHeader />
       <Text>Dashboard</Text>
     </View>
   );
@@ -16,4 +16,9 @@ const Dashboard = () => {
 
 export default Dashboard;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+});
