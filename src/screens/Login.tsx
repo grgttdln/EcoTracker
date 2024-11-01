@@ -11,8 +11,10 @@ import {
   Platform,
   ScrollView,
   Dimensions,
+  Alert,
 } from 'react-native';
 import AntIcon from 'react-native-vector-icons/AntDesign';
+import auth from '@react-native-firebase/auth';
 
 const backgroundImage = require('../assets/square_small.png');
 const {width, height} = Dimensions.get('window');
@@ -23,6 +25,66 @@ const Login = ({navigation}: any) => {
 
   const handleLogin = () => {
     console.log('Logging in with:', email, password);
+  };
+
+  const loginWithEmailAndPass = () => {
+    if (!email) {
+      Alert.alert('Login Error', 'Please enter your email address.');
+      return;
+    }
+
+    if (!password) {
+      Alert.alert('Login Error', 'Please enter your password.');
+      return;
+    }
+
+    auth()
+      .signInWithEmailAndPassword(email, password)
+      .then(res => {
+        Alert.alert('Success', 'You have successfully Logged in!', [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('Dashboard'),
+          },
+        ]);
+        navigation.navigate('Dashboard');
+      })
+      .catch(err => {
+        let errorMessage = 'An error occurred while logging in.';
+
+        // Handling common Firebase Auth errors
+        if (err instanceof Error && 'code' in err) {
+          const errorCode = (err as any).code;
+
+          switch (errorCode) {
+            case 'auth/user-not-found':
+              errorMessage = 'No account found with this email address.';
+              break;
+            case 'auth/wrong-password':
+              errorMessage = 'Incorrect password. Please try again.';
+              break;
+            case 'auth/invalid-email':
+              errorMessage = 'Please enter a valid email address.';
+              break;
+            case 'auth/user-disabled':
+              errorMessage = 'This account has been disabled.';
+              break;
+            case 'auth/too-many-requests':
+              errorMessage = 'Too many attempts. Please try again later.';
+              break;
+            case 'auth/invalid-credential':
+              errorMessage =
+                'The supplied credential is incorrect or has expired. Please try again.';
+              break;
+            default:
+              errorMessage = 'An unknown error occurred. Please try again.';
+          }
+        } else if (err instanceof Error) {
+          errorMessage = err.message;
+        }
+
+        Alert.alert('Login Error', errorMessage);
+      });
   };
 
   return (
@@ -93,7 +155,9 @@ const Login = ({navigation}: any) => {
 
           {/* Login Button - Inside ScrollView to scroll with content */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={loginWithEmailAndPass}>
               <Text style={styles.loginButtonText}>Log In</Text>
             </TouchableOpacity>
           </View>

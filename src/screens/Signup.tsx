@@ -31,23 +31,23 @@ const Signup = ({navigation}: any) => {
 
   const validateInputs = () => {
     if (!email || !password || !confirmPassword || !username) {
-      setError('All fields are required');
+      Alert.alert('Error', 'All fields are required.');
       return false;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      Alert.alert('Error', 'Passwords do not match.');
       return false;
     }
 
     if (password.length < 6) {
-      setError('Password should be at least 6 characters long');
+      Alert.alert('Error', 'Password should be at least 6 characters long.');
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address');
+      Alert.alert('Error', 'Please enter a valid email address.');
       return false;
     }
 
@@ -62,7 +62,7 @@ const Signup = ({navigation}: any) => {
   const handleSignup = async () => {
     try {
       setError('');
-      
+
       if (!validateInputs()) {
         return;
       }
@@ -72,54 +72,61 @@ const Signup = ({navigation}: any) => {
       // Check network connection
       const isConnected = await checkNetwork();
       if (!isConnected) {
-        throw new Error('No internet connection. Please check your network settings and try again.');
+        throw new Error(
+          'No internet connection. Please check your network settings and try again.',
+        );
       }
 
       // Create user with email and password
       await auth().createUserWithEmailAndPassword(email, password);
-      
+
       // Update user profile with username
       const currentUser = auth().currentUser;
       if (currentUser) {
         await currentUser.updateProfile({
-          displayName: username
+          displayName: username,
         });
       }
 
-      Alert.alert(
-        "Success",
-        "Your account has been created successfully!",
-        [
-          {
-            text: "OK",
-            onPress: () => navigation.navigate('Login')
-          }
-        ]
-      );
-
-    } catch (error) {
+      Alert.alert('Success', 'Your account has been created successfully!', [
+        {
+          text: 'OK',
+          onPress: () => navigation.navigate('Login'),
+        },
+      ]);
+    } catch (err) {
       let errorMessage = 'An error occurred during signup';
 
-      switch (error.code) {
-        case 'auth/email-already-in-use':
-          errorMessage = 'This email address is already registered';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Please enter a valid email address';
-          break;
-        case 'auth/operation-not-allowed':
-          errorMessage = 'Email/password accounts are not enabled';
-          break;
-        case 'auth/weak-password':
-          errorMessage = 'Please choose a stronger password';
-          break;
-        case 'auth/network-request-failed':
-          errorMessage = 'Network error. Please check your connection and try again';
-          break;
+      // Check if `err` has a Firebase `code` property
+      if (err instanceof Error && 'code' in err) {
+        const errorCode = (err as any).code; // Casting to `any` to safely access `code`
+
+        switch (errorCode) {
+          case 'auth/email-already-in-use':
+            errorMessage = 'This email address is already registered.';
+            break;
+          case 'auth/invalid-email':
+            errorMessage = 'Please enter a valid email address.';
+            break;
+          case 'auth/operation-not-allowed':
+            errorMessage = 'Email/password accounts are not enabled.';
+            break;
+          case 'auth/weak-password':
+            errorMessage = 'Please choose a stronger password.';
+            break;
+          case 'auth/network-request-failed':
+            errorMessage =
+              'Network error. Please check your connection and try again.';
+            break;
+          default:
+            errorMessage = err.message; // Fallback to default error message
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
       }
 
-      setError(errorMessage);
-      console.error('Signup error:', error);
+      // Display error message in an alert
+      Alert.alert('Signup Error', errorMessage, [{text: 'OK'}]);
     } finally {
       setLoading(false);
     }
@@ -155,7 +162,7 @@ const Signup = ({navigation}: any) => {
               <View style={styles.inputContainer}>
                 <TextInput
                   value={email}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     setEmail(text);
                     setError('');
                   }}
@@ -179,7 +186,7 @@ const Signup = ({navigation}: any) => {
               <View style={styles.inputContainer}>
                 <TextInput
                   value={password}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     setPassword(text);
                     setError('');
                   }}
@@ -203,7 +210,7 @@ const Signup = ({navigation}: any) => {
               <View style={styles.inputContainer}>
                 <TextInput
                   value={confirmPassword}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     setConfirmPassword(text);
                     setError('');
                   }}
@@ -227,11 +234,11 @@ const Signup = ({navigation}: any) => {
               <View style={styles.inputContainer}>
                 <TextInput
                   value={username}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     setUsername(text);
                     setError('');
                   }}
-                  placeholder="Enter your username"
+                  placeholder="Enter your name"
                   style={styles.input}
                   autoCapitalize="none"
                   editable={!loading}
@@ -246,7 +253,7 @@ const Signup = ({navigation}: any) => {
                 )}
               </View>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => navigation.navigate('Login')}
                 disabled={loading}>
                 <Text style={styles.createAccount}>
@@ -257,7 +264,10 @@ const Signup = ({navigation}: any) => {
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+                style={[
+                  styles.loginButton,
+                  loading && styles.loginButtonDisabled,
+                ]}
                 onPress={handleSignup}
                 disabled={loading}>
                 {loading ? (
@@ -280,8 +290,6 @@ const Signup = ({navigation}: any) => {
     </KeyboardAvoidingView>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -327,7 +335,7 @@ const styles = StyleSheet.create({
   },
 
   titleContainer: {
-    marginBottom: 40,
+    marginBottom: 36,
   },
   title: {
     fontSize: 50,
@@ -346,7 +354,6 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-
     marginBottom: 8,
     fontFamily: 'Poppins-Bold',
   },
@@ -374,6 +381,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontWeight: '500',
     fontFamily: 'Poppins-Medium',
+    marginBottom: 24,
   },
   buttonContainer: {
     marginTop: 'auto',
@@ -390,6 +398,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '500',
     fontFamily: 'Poppins-Medium',
+  },
+  errorText: {
+    color: '#FF4D4D',
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  loginButtonDisabled: {
+    backgroundColor: '#A5C3A1',
   },
 });
 
