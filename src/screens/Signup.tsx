@@ -11,8 +11,12 @@ import {
   Platform,
   ScrollView,
   Dimensions,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import AntIcon from 'react-native-vector-icons/AntDesign';
+import auth from '@react-native-firebase/auth';
+import NetInfo from '@react-native-community/netinfo';
 
 const backgroundImage = require('../assets/square_small.png');
 const {width, height} = Dimensions.get('window');
@@ -22,9 +26,103 @@ const Signup = ({navigation}: any) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = () => {
-    console.log('Logging in with:', email, password);
+  const validateInputs = () => {
+    if (!email || !password || !confirmPassword || !username) {
+      setError('All fields are required');
+      return false;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+
+    if (password.length < 6) {
+      setError('Password should be at least 6 characters long');
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+
+    return true;
+  };
+
+  const checkNetwork = async () => {
+    const networkState = await NetInfo.fetch();
+    return networkState.isConnected;
+  };
+
+  const handleSignup = async () => {
+    try {
+      setError('');
+      
+      if (!validateInputs()) {
+        return;
+      }
+
+      setLoading(true);
+
+      // Check network connection
+      const isConnected = await checkNetwork();
+      if (!isConnected) {
+        throw new Error('No internet connection. Please check your network settings and try again.');
+      }
+
+      // Create user with email and password
+      await auth().createUserWithEmailAndPassword(email, password);
+      
+      // Update user profile with username
+      const currentUser = auth().currentUser;
+      if (currentUser) {
+        await currentUser.updateProfile({
+          displayName: username
+        });
+      }
+
+      Alert.alert(
+        "Success",
+        "Your account has been created successfully!",
+        [
+          {
+            text: "OK",
+            onPress: () => navigation.navigate('Login')
+          }
+        ]
+      );
+
+    } catch (error) {
+      let errorMessage = 'An error occurred during signup';
+
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = 'This email address is already registered';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Please enter a valid email address';
+          break;
+        case 'auth/operation-not-allowed':
+          errorMessage = 'Email/password accounts are not enabled';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'Please choose a stronger password';
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = 'Network error. Please check your connection and try again';
+          break;
+      }
+
+      setError(errorMessage);
+      console.error('Signup error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,7 +140,6 @@ const Signup = ({navigation}: any) => {
           style={styles.backgroundImage}
           resizeMode="cover">
           <View style={styles.contentWrapper}>
-            {/* Title Section */}
             <View style={styles.titleContainer}>
               <Text style={styles.title}>EcoTrack</Text>
               <Text style={styles.subtitle}>
@@ -51,22 +148,28 @@ const Signup = ({navigation}: any) => {
               </Text>
             </View>
 
-            {/* Form Section */}
             <View style={styles.formContainer}>
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
               <Text style={styles.label}>E-MAIL</Text>
               <View style={styles.inputContainer}>
                 <TextInput
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    setError('');
+                  }}
                   placeholder="Enter your e-mail"
                   style={styles.input}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  editable={!loading}
                 />
                 {email.length > 0 && (
                   <TouchableOpacity
                     style={styles.clearButton}
-                    onPress={() => setEmail('')}>
+                    onPress={() => setEmail('')}
+                    disabled={loading}>
                     <Text style={styles.clearButtonText}>×</Text>
                   </TouchableOpacity>
                 )}
@@ -76,16 +179,21 @@ const Signup = ({navigation}: any) => {
               <View style={styles.inputContainer}>
                 <TextInput
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    setError('');
+                  }}
                   placeholder="Enter your password"
                   secureTextEntry
                   style={styles.input}
                   autoCapitalize="none"
+                  editable={!loading}
                 />
                 {password.length > 0 && (
                   <TouchableOpacity
                     style={styles.clearButton}
-                    onPress={() => setPassword('')}>
+                    onPress={() => setPassword('')}
+                    disabled={loading}>
                     <Text style={styles.clearButtonText}>×</Text>
                   </TouchableOpacity>
                 )}
@@ -95,16 +203,21 @@ const Signup = ({navigation}: any) => {
               <View style={styles.inputContainer}>
                 <TextInput
                   value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  onChangeText={(text) => {
+                    setConfirmPassword(text);
+                    setError('');
+                  }}
                   placeholder="Confirm your password"
                   secureTextEntry
                   style={styles.input}
                   autoCapitalize="none"
+                  editable={!loading}
                 />
                 {confirmPassword.length > 0 && (
                   <TouchableOpacity
                     style={styles.clearButton}
-                    onPress={() => setConfirmPassword('')}>
+                    onPress={() => setConfirmPassword('')}
+                    disabled={loading}>
                     <Text style={styles.clearButtonText}>×</Text>
                   </TouchableOpacity>
                 )}
@@ -114,49 +227,61 @@ const Signup = ({navigation}: any) => {
               <View style={styles.inputContainer}>
                 <TextInput
                   value={username}
-                  onChangeText={setUsername}
+                  onChangeText={(text) => {
+                    setUsername(text);
+                    setError('');
+                  }}
                   placeholder="Enter your username"
-                  secureTextEntry
                   style={styles.input}
                   autoCapitalize="none"
+                  editable={!loading}
                 />
                 {username.length > 0 && (
                   <TouchableOpacity
                     style={styles.clearButton}
-                    onPress={() => setUsername('')}>
+                    onPress={() => setUsername('')}
+                    disabled={loading}>
                     <Text style={styles.clearButtonText}>×</Text>
                   </TouchableOpacity>
                 )}
               </View>
 
-              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <TouchableOpacity 
+                onPress={() => navigation.navigate('Login')}
+                disabled={loading}>
                 <Text style={styles.createAccount}>
                   Already have an account? Let's Sign In!
                 </Text>
               </TouchableOpacity>
             </View>
 
-            {/* Login Button - Inside ScrollView to scroll with content */}
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={styles.loginButton}
-                onPress={handleLogin}>
-                <Text style={styles.loginButtonText}>Sign Up</Text>
+                style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+                onPress={handleSignup}
+                disabled={loading}>
+                {loading ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.loginButtonText}>Sign Up</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
         </ImageBackground>
       </ScrollView>
 
-      {/* Back Button - Outside ScrollView to stay fixed */}
       <Pressable
         style={styles.backButton}
-        onPress={() => navigation.navigate('Welcome')}>
+        onPress={() => navigation.navigate('Welcome')}
+        disabled={loading}>
         <AntIcon name="left" size={24} color="#79A065" />
       </Pressable>
     </KeyboardAvoidingView>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {
