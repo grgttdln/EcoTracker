@@ -8,23 +8,38 @@ import {
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
 const backgroundImage = require('../assets/images/profile_bg.png');
-//const leafIcon = require('../assets/images/leaf_icon.png'); // Use a placeholder if you don't have the exact icon
 const fireIcon = require('../assets/images/fire.png');
 const levelIcon = require('../assets/images/level_bg.png');
 const coinIcon = require('../assets/images/coin.png');
 const medalIcon = require('../assets/images/medal.png');
 
-const Profile = ({navigation}: any) => {
+const Profile = ({navigation}) => {
+  const currentUser = auth().currentUser;
   const [displayName, setDisplayName] = useState('');
   const [displayEmail, setDisplayEmail] = useState('');
+  const [streak, setStreak] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [coins, setCoins] = useState(0);
 
   useEffect(() => {
     const user = auth().currentUser;
     if (user) {
       setDisplayName(user.displayName || 'User');
       setDisplayEmail(user.email || 'Email');
+
+      // Fetch user stats from Firestore
+      const userRef = firestore().collection('UserMain').doc(currentUser.displayName);
+      userRef.get().then(documentSnapshot => {
+        if (documentSnapshot.exists) {
+          const userData = documentSnapshot.data();
+          setStreak(userData.streak || 0);
+          setLevel(userData.level || 1);
+          setCoins(userData.coins || 0);
+        }
+      });
     }
   }, []);
 
@@ -61,7 +76,7 @@ const Profile = ({navigation}: any) => {
             <View style={styles.statContent}>
               <Image source={fireIcon} style={styles.statIcon} />
               <View>
-                <Text style={styles.statValue}>7</Text>
+                <Text style={styles.statValue}>{streak}</Text>
                 <Text style={styles.statLabel}>Day Streak</Text>
               </View>
             </View>
@@ -70,7 +85,7 @@ const Profile = ({navigation}: any) => {
             <View style={styles.statContent}>
               <Image source={levelIcon} style={styles.statIcon} />
               <View>
-                <Text style={styles.statValue}>1</Text>
+                <Text style={styles.statValue}>{level}</Text>
                 <Text style={styles.statLabel}>Level</Text>
               </View>
             </View>
@@ -80,7 +95,7 @@ const Profile = ({navigation}: any) => {
             <View style={styles.statContent}>
               <Image source={coinIcon} style={styles.statIcon} />
               <View>
-                <Text style={styles.statValue}>324</Text>
+                <Text style={styles.statValue}>{coins}</Text>
                 <Text style={styles.statLabel}>Points</Text>
               </View>
             </View>
@@ -167,8 +182,8 @@ const styles = StyleSheet.create({
   },
   statBox: {
     width: '48%',
-    borderWidth: 3, // Defines the border thickness
-    borderColor: '#E0E0E0', // Sets the border color
+    borderWidth: 3,
+    borderColor: '#E0E0E0',
     backgroundColor: '#FFFFFF',
     borderRadius: 15,
     paddingVertical: 10,
@@ -176,7 +191,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 10,
   },
-
   statContent: {
     flexDirection: 'row',
     alignItems: 'center',

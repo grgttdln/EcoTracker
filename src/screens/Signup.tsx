@@ -78,6 +78,7 @@ const Signup = ({navigation}: any) => {
         .set({
           coins: "10",
           level: "1",
+          streak: "0",
         });
 
       
