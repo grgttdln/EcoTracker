@@ -6,7 +6,7 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
@@ -16,32 +16,75 @@ const levelIcon = require('../assets/images/level_bg.png');
 const coinIcon = require('../assets/images/coin.png');
 const medalIcon = require('../assets/images/medal.png');
 
-const Profile = ({navigation}) => {
+const Profile = ({ navigation }) => {
   const currentUser = auth().currentUser;
   const [displayName, setDisplayName] = useState('');
   const [displayEmail, setDisplayEmail] = useState('');
   const [streak, setStreak] = useState(0);
   const [level, setLevel] = useState(1);
   const [coins, setCoins] = useState(0);
+  const [rank, setRank] = useState(null);
+  const [leaderboard, setLeaderboard] = useState([]);
 
-  useEffect(() => {
-    const user = auth().currentUser;
-    if (user) {
-      setDisplayName(user.displayName || 'User');
-      setDisplayEmail(user.email || 'Email');
+useEffect(() => {
+  const fetchUserData = async () => {
+    try {
+      const user = auth().currentUser;
+      if (user) {
+        setDisplayName(user.displayName || 'User');
+        setDisplayEmail(user.email || 'Email');
 
-      // Fetch user stats from Firestore
-      const userRef = firestore().collection('UserMain').doc(currentUser.displayName);
-      userRef.get().then(documentSnapshot => {
+        // Fetch user stats from Firestore
+        const userRef = firestore().collection('UserMain').doc(user.displayName);
+        const documentSnapshot = await userRef.get();
+
         if (documentSnapshot.exists) {
           const userData = documentSnapshot.data();
           setStreak(userData.streak || 0);
           setLevel(userData.level || 1);
           setCoins(userData.coins || 0);
+
+          // Fetch all users and calculate rank
+          const usersSnapshot = await firestore().collection('UserMain').get();
+          const usersData = usersSnapshot.docs.map(doc => ({
+            ...doc.data(),
+            displayName: doc.id // Get the display name from the document ID
+          }));
+
+          // Log retrieved users data
+          console.log("Fetched Users Data with Display Names:");
+          usersData.forEach(u => {
+            console.log(`Display Name: ${u.displayName}, Coins: ${u.coins}`);
+          });
+
+          // Sort users by coins in descending order
+          const sortedUsers = usersData.sort((a, b) => b.coins - a.coins);
+          setLeaderboard(sortedUsers);
+
+          // Log sorted users
+          console.log("Sorted Users:", sortedUsers);
+
+          // Find the rank of the current user based on coins
+          const userRank = sortedUsers.findIndex(u => u.displayName === user.displayName) + 1;
+
+          // Log the rank
+          console.log(`User Rank for ${user.displayName}:`, userRank);
+
+          // Set the rank, ensuring to check for -1 (not found) and handle it appropriately
+          setRank(userRank > 0 ? userRank : 'N/A');
         }
-      });
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
     }
-  }, []);
+  };
+
+  fetchUserData();
+}, []);
+
+
+
+
 
   const signOutClick = () => {
     auth()
@@ -104,8 +147,8 @@ const Profile = ({navigation}) => {
             <View style={styles.statContent}>
               <Image source={medalIcon} style={styles.statIcon} />
               <View>
-                <Text style={styles.statValue}>7</Text>
-                <Text style={styles.statLabel}>Leaderboards</Text>
+                <Text style={styles.statValue}>{rank ? `${rank}` : 'N/A'}</Text>
+                <Text style={styles.statLabel}>Leaderboard Rank</Text>
               </View>
             </View>
           </View>
