@@ -147,8 +147,7 @@ const styles = StyleSheet.create({
   },
   headerText: {
     fontSize: 24,
-    fontFamily: 'Poppins-Bold',
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Medium',
     textAlign: 'center',
     marginBottom: 10,
   },
@@ -183,7 +182,7 @@ const styles = StyleSheet.create({
   },
   podiumName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Medium',
     textAlign: 'center',
     color: '#FFFFFF',
     marginBottom: 4,
@@ -194,16 +193,18 @@ const styles = StyleSheet.create({
     color: '#FEA800',
     textAlign: 'center',
     marginBottom: 4,
+    fontFamily: 'Poppins-Medium',
   },
   userContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     marginVertical: 4,
-    borderRadius: 8,
+    borderRadius: 30,
     backgroundColor: '#FFFFFF',
     borderColor: '#EAECF0',
     borderWidth: 1,
+    marginBottom: 10,
     justifyContent: 'space-between',
   },
   infoContainer: {
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
   },
   rank: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Black',
     borderWidth: 2,
     borderColor: '#EAECF0',
     borderRadius: 20,
@@ -226,11 +227,12 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 18,
+    fontFamily: 'Poppins-Medium',
     fontWeight: '500',
   },
   coins: {
     fontSize: 14,
-    fontWeight: '900',
+    fontFamily: 'Poppins-Black',
     color: '#9B9BA1',
   },
   avatar: {
@@ -241,7 +243,7 @@ const styles = StyleSheet.create({
   coinsBox: {
     backgroundColor: '#FFF3DA',
     borderRadius: 8,
-    paddingHorizontal: 8,
+    paddingHorizontal: 9,
     paddingVertical: 3,
     flexDirection: 'row',
     alignItems: 'center',
