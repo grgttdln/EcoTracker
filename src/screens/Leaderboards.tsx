@@ -1,5 +1,12 @@
-import { StyleSheet, Text, View, FlatList, Image, ScrollView } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  Image,
+  ScrollView,
+} from 'react-native';
+import React, {useEffect, useState} from 'react';
 import UserHeader from '../components/UserHeader';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -19,14 +26,14 @@ const Leaderboards = () => {
         const usersSnapshot = await firestore().collection('UserMain').get();
         const usersData = usersSnapshot.docs.map(doc => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         }));
 
         // Sort users by coins in descending order
         const sortedData = usersData.sort((a, b) => b.coins - a.coins);
         setLeaderboard(sortedData);
       } catch (error) {
-        console.error("Error fetching leaderboard data: ", error);
+        console.error('Error fetching leaderboard data: ', error);
       }
     };
 
@@ -35,38 +42,55 @@ const Leaderboards = () => {
 
   const renderPodium = (item, index) => {
     const positions = [
-      { backgroundColor: '#FFC453', height: 210, top: 20, zIndex: 3, position: 'absolute' },
-      { backgroundColor: '#D6D6D6', height: 190, top: 40, zIndex: 2, position: 'absolute', left: '5%' },
-      { backgroundColor: '#E69B4B', height: 170, top: 60, zIndex: 1, position: 'absolute', right: '5%' },
+      {
+        backgroundColor: '#FFC453',
+        height: 210,
+        top: 20,
+        zIndex: 3,
+        position: 'absolute',
+      },
+      {
+        backgroundColor: '#D6D6D6',
+        height: 190,
+        top: 40,
+        zIndex: 2,
+        position: 'absolute',
+        left: '5%',
+      },
+      {
+        backgroundColor: '#E69B4B',
+        height: 170,
+        top: 60,
+        zIndex: 1,
+        position: 'absolute',
+        right: '5%',
+      },
     ];
-  
+
     return (
       <View style={[styles.podiumContainer, positions[index]]}>
-        {index === 0 && (
-          <Image source={crownIcon} style={styles.crownImage} />
-        )}
+        {index === 0 && <Image source={crownIcon} style={styles.crownImage} />}
         <Image
-          source={{ uri: placeholderAvatar(item.id) }}
+          source={{uri: placeholderAvatar(item.id)}}
           style={styles.podiumAvatar}
         />
         <View style={styles.levelIconContainer}>
           <Image source={level} style={styles.levelIconPodium} />
-          <Text style={styles.levelText}>{index + 1}</Text> {/* Add this text element */}
+          <Text style={styles.levelText}>{index + 1}</Text>
         </View>
 
         <Text style={styles.podiumName}>{item.id}</Text>
-        <View style={styles.coinsBox}> 
+        <View style={styles.coinsBox}>
           <Image source={medalIcon} style={styles.medalIconPodium} />
           <Text style={styles.podiumCoins}>{item.coins}</Text>
         </View>
       </View>
     );
   };
-  
 
-  const renderItem = ({ item, index }) => {
+  const renderItem = ({item, index}) => {
     const isLastItem = index === leaderboard.length - 1 - 3; // Check if it's the last item
-  
+
     return (
       <View style={[styles.userContainer, isLastItem && styles.lastItem]}>
         <View style={styles.infoContainer}>
@@ -77,47 +101,43 @@ const Leaderboards = () => {
           </View>
         </View>
         <Image
-          source={{ uri: placeholderAvatar(item.id) }}
+          source={{uri: placeholderAvatar(item.id)}}
           style={styles.avatar}
         />
       </View>
     );
   };
-  
-  
 
-  const placeholderAvatar = (name) =>
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=619E7B&color=fff&size=60`;
+  const placeholderAvatar = name =>
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      name,
+    )}&background=619E7B&color=fff&size=60`;
 
   return (
     <>
-    <UserHeader />
-    <View style={styles.container}>
-      <Text style={styles.headerText}>Leaderboards</Text>
+      <UserHeader />
+      <View style={styles.container}>
+        <Text style={styles.headerText}>Leaderboards</Text>
 
-      {/* Podium for Top 3 Users */}
-      <View style={styles.podiumWrapper}>
-        {leaderboard.slice(0, 3).map((item, index) => renderPodium(item, index))}
-      </View>
+        {/* Podium for Top 3 Users */}
+        <View style={styles.podiumWrapper}>
+          {leaderboard
+            .slice(0, 3)
+            .map((item, index) => renderPodium(item, index))}
+        </View>
 
-      <ScrollView  
-        showsHorizontalScrollIndicator={false} 
-        contentContainerStyle={styles.scrollContainer}
-      >
-      {/* Display Remaining Users */}
+        {/* Display Remaining Users */}
         <FlatList
           data={leaderboard.slice(3)}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           renderItem={renderItem}
         />
-      </ScrollView>
-    </View>
+      </View>
     </>
   );
 };
 
 export default Leaderboards;
-
 
 const styles = StyleSheet.create({
   container: {
@@ -165,7 +185,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: "#FFFFFF",
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   podiumCoins: {
@@ -199,11 +219,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     width: 40,
     height: 40,
-    lineHeight: 35, 
-    justifyContent: 'center', 
+    lineHeight: 35,
+    justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
-  },  
+  },
   name: {
     fontSize: 18,
     fontWeight: '500',
@@ -219,21 +239,21 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   coinsBox: {
-    backgroundColor: '#FFF3DA', 
+    backgroundColor: '#FFF3DA',
     borderRadius: 8,
-    paddingHorizontal: 8, 
-    paddingVertical: 3, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginTop: 4, 
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
   },
   medalIconPodium: {
-    width: 20, 
+    width: 20,
     height: 20,
-    marginRight: 2, 
-  },  
+    marginRight: 2,
+  },
   levelIconContainer: {
-    position: 'relative', 
+    position: 'relative',
     alignItems: 'center',
   },
   levelIconPodium: {
@@ -242,14 +262,13 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   levelText: {
-    position: 'absolute', 
-    fontSize: 14, 
+    position: 'absolute',
+    fontSize: 14,
     fontWeight: '900',
-    color: '#FFFFFF', 
-    marginTop: 3, 
+    color: '#FFFFFF',
+    marginTop: 3,
   },
   lastItem: {
     marginBottom: 100, // Adjust the margin as needed
   },
-  
 });
