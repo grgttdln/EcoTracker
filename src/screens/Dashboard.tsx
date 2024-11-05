@@ -1,7 +1,14 @@
-import { StyleSheet, Text, View, ScrollView, Image, Dimensions } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  Image,
+  Dimensions,
+} from 'react-native';
+import React, {useEffect, useState} from 'react';
 import ProgressBar from 'react-native-progress/Bar';
-import { ProgressChart } from 'react-native-chart-kit';
+import {ProgressChart} from 'react-native-chart-kit';
 import UserHeader from '../components/UserHeader';
 import auth from '@react-native-firebase/auth';
 import ChallengeCard from '../components/ChallengeCard';
@@ -23,7 +30,9 @@ const Dashboard = () => {
       setDisplayEmail(user.email || 'Email');
 
       // Fetch user stats from Firestore
-      const userRef = firestore().collection('UserMain').doc(currentUser.displayName);
+      const userRef = firestore()
+        .collection('UserMain')
+        .doc(currentUser.displayName);
       userRef.get().then(documentSnapshot => {
         if (documentSnapshot.exists) {
           const userData = documentSnapshot.data();
@@ -34,7 +43,7 @@ const Dashboard = () => {
   }, []);
 
   // Function to shuffle an array
-  const shuffleArray = (array) => {
+  const shuffleArray = array => {
     return array.sort(() => Math.random() - 0.5);
   };
 
@@ -47,48 +56,59 @@ const Dashboard = () => {
             .doc(currentUser.displayName)
             .get();
 
-          const taskData = userTask.data(); 
+          const taskData = userTask.data();
 
           const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
           const lastUpdated = taskData?.lastUpdated || null;
 
           // Check if challenges need to be renewed
           if (lastUpdated === today && taskData?.challenges) {
-            console.log("Existing Challenges:", taskData.challenges);
-            setChallenges(taskData.challenges); 
+            console.log('Existing Challenges:', taskData.challenges);
+            setChallenges(taskData.challenges);
           } else {
-            const documentSnapshot = await firestore().collection('UserChallenges').doc("challenges").get();
+            const documentSnapshot = await firestore()
+              .collection('UserChallenges')
+              .doc('challenges')
+              .get();
             const challengesData = documentSnapshot.data();
-            console.log("Fetched Challenges Data:", challengesData);
-            
-            const shuffledChallenges = shuffleArray(challengesData.challenge).slice(0, 5);
+            console.log('Fetched Challenges Data:', challengesData);
 
-            const challengesDict = shuffledChallenges.reduce((acc, challenge) => {
-              acc[challenge] = false; 
-              return acc;
-            }, {});
+            const shuffledChallenges = shuffleArray(
+              challengesData.challenge,
+            ).slice(0, 5);
 
-            setChallenges(challengesDict); 
+            const challengesDict = shuffledChallenges.reduce(
+              (acc, challenge) => {
+                acc[challenge] = false;
+                return acc;
+              },
+              {},
+            );
+
+            setChallenges(challengesDict);
 
             // Add to Firebase without replacing the existing document
             await firestore()
               .collection('UserMain')
               .doc(currentUser.displayName)
-              .set({
-                challenges: {
-                  ...taskData?.challenges, 
-                  ...challengesDict 
+              .set(
+                {
+                  challenges: {
+                    ...taskData?.challenges,
+                    ...challengesDict,
+                  },
+                  lastUpdated: today, // Update the lastUpdated field
                 },
-                lastUpdated: today // Update the lastUpdated field
-              }, { merge: true }); 
+                {merge: true},
+              );
 
-            console.log("Challenges added successfully!");
+            console.log('Challenges added successfully!');
           }
         } catch (error) {
-          console.error("Error fetching challenges: ", error);
+          console.error('Error fetching challenges: ', error);
         }
       } else {
-        console.log("No user is currently logged in.");
+        console.log('No user is currently logged in.');
       }
     };
 
@@ -119,7 +139,7 @@ const Dashboard = () => {
               </View>
             </View>
           </View>
-          
+
           <View style={styles.challengeCard}>
             <Text style={styles.challengeCount}>12</Text>
             <Text style={styles.challengeText}>Challenges Completed</Text>
@@ -130,14 +150,16 @@ const Dashboard = () => {
         {/* Annual Footprint */}
         <View style={styles.annualFootprintCard}>
           <View style={styles.annualFootprintTextContainer}>
-            <Text style={styles.annualFootprintText}>Your Annual Footprint</Text>
+            <Text style={styles.annualFootprintText}>
+              Your Annual Footprint
+            </Text>
             <Text style={styles.footprintValue}>15.62 T</Text>
             <Text style={styles.offsetText}>Annual Offsets</Text>
             <Text style={styles.offsetValue}>5.12 T</Text>
           </View>
 
           <ProgressChart
-            data={{ data: [0.25, 0.75] }} // 75% for footprint, 25% for offset
+            data={{data: [0.25, 0.75]}} // 75% for footprint, 25% for offset
             width={Dimensions.get('window').width * 0.3}
             height={120}
             strokeWidth={8}
@@ -161,17 +183,16 @@ const Dashboard = () => {
       </View>
 
       {/* Challenges */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
-        contentContainerStyle={styles.scrollContainer}
-      >
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContainer}>
         {Object.keys(challenges).length > 0 ? (
           Object.keys(challenges).map((challenge, index) => (
-            <ChallengeCard key={index} challenge={challenge} /> 
+            <ChallengeCard key={index} challenge={challenge} />
           ))
         ) : (
-          <Text>No challenges available.</Text> 
+          <Text>No challenges available.</Text>
         )}
       </ScrollView>
     </View>
@@ -194,7 +215,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFF',
-    borderColor: '#E0E0E0', 
+    borderColor: '#E0E0E0',
     borderWidth: 1,
     padding: 20,
     // borderRadius: 10,
@@ -206,8 +227,8 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between', 
-    width: '100%', 
+    justifyContent: 'space-between',
+    width: '100%',
     paddingBottom: 10,
   },
   cardTitle: {
@@ -223,8 +244,8 @@ const styles = StyleSheet.create({
   streakChallengesContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(123, 160, 101, 0.25)', 
-    borderColor: '#7BA065', 
+    backgroundColor: 'rgba(123, 160, 101, 0.25)',
+    borderColor: '#7BA065',
     borderWidth: 1,
     // borderRadius: 15,
     borderTopLeftRadius: 0,
@@ -237,9 +258,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   streakBox: {
-    flex: 1,  // Make this box take up less space
-    maxWidth: '40%',  // Limit the width
-    backgroundColor: 'rgba(123, 160, 101, 0.90)', 
+    flex: 1, // Make this box take up less space
+    maxWidth: '40%', // Limit the width
+    backgroundColor: 'rgba(123, 160, 101, 0.90)',
     borderRadius: 10,
     paddingVertical: 8,
     paddingHorizontal: 10,
@@ -267,8 +288,8 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   challengeCard: {
-    flex: 2,  // Make this box take up more space
-    backgroundColor: 'rgba(123, 160, 101, 0.90)', 
+    flex: 2, // Make this box take up more space
+    backgroundColor: 'rgba(123, 160, 101, 0.90)',
     borderRadius: 10,
     paddingVertical: 5,
     paddingHorizontal: 10,
@@ -297,7 +318,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#FFF',
     padding: 20,
-    borderColor: '#E0E0E0', 
+    borderColor: '#E0E0E0',
     borderWidth: 1,
     borderRadius: 10,
     justifyContent: 'space-between',
@@ -310,7 +331,7 @@ const styles = StyleSheet.create({
   },
   annualFootprintText: {
     fontSize: 16,
-    color: "#12372A",
+    color: '#12372A',
     fontWeight: 'bold',
   },
   footprintValue: {
@@ -320,7 +341,7 @@ const styles = StyleSheet.create({
   },
   offsetText: {
     fontSize: 16,
-    color: "#12372A",
+    color: '#12372A',
     marginTop: 5,
   },
   offsetValue: {

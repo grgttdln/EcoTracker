@@ -117,7 +117,7 @@ const Leaderboards = () => {
     <>
       <UserHeader />
       <View style={styles.container}>
-        <Text style={styles.headerText}>Leaderboards</Text>
+        <Text style={styles.headerText}>Weekly Leaderboards</Text>
 
         {/* Podium for Top 3 Users */}
         <View style={styles.podiumWrapper}>

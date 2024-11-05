@@ -5,8 +5,9 @@ import {
   ImageBackground,
   Image,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
@@ -16,7 +17,7 @@ const levelIcon = require('../assets/images/level_bg.png');
 const coinIcon = require('../assets/images/coin.png');
 const medalIcon = require('../assets/images/medal.png');
 
-const Profile = ({ navigation }) => {
+const Profile = ({navigation}) => {
   const currentUser = auth().currentUser;
   const [displayName, setDisplayName] = useState('');
   const [displayEmail, setDisplayEmail] = useState('');
@@ -26,65 +27,54 @@ const Profile = ({ navigation }) => {
   const [rank, setRank] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
 
-useEffect(() => {
-  const fetchUserData = async () => {
-    try {
-      const user = auth().currentUser;
-      if (user) {
-        setDisplayName(user.displayName || 'User');
-        setDisplayEmail(user.email || 'Email');
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const user = auth().currentUser;
+        if (user) {
+          setDisplayName(user.displayName || 'User');
+          setDisplayEmail(user.email || 'Email');
 
-        // Fetch user stats from Firestore
-        const userRef = firestore().collection('UserMain').doc(user.displayName);
-        const documentSnapshot = await userRef.get();
+          // Fetch user stats from Firestore
+          const userRef = firestore()
+            .collection('UserMain')
+            .doc(user.displayName);
+          const documentSnapshot = await userRef.get();
 
-        if (documentSnapshot.exists) {
-          const userData = documentSnapshot.data();
-          setStreak(userData.streak || 0);
-          setLevel(userData.level || 1);
-          setCoins(userData.coins || 0);
+          if (documentSnapshot.exists) {
+            const userData = documentSnapshot.data();
+            setStreak(userData.streak || 0);
+            setLevel(userData.level || 1);
+            setCoins(userData.coins || 0);
 
-          // Fetch all users and calculate rank
-          const usersSnapshot = await firestore().collection('UserMain').get();
-          const usersData = usersSnapshot.docs.map(doc => ({
-            ...doc.data(),
-            displayName: doc.id // Get the display name from the document ID
-          }));
+            // Fetch all users and calculate rank
+            const usersSnapshot = await firestore()
+              .collection('UserMain')
+              .get();
+            const usersData = usersSnapshot.docs.map(doc => ({
+              ...doc.data(),
+              displayName: doc.id, // Get the display name from the document ID
+            }));
 
-          // Log retrieved users data
-          console.log("Fetched Users Data with Display Names:");
-          usersData.forEach(u => {
-            console.log(`Display Name: ${u.displayName}, Coins: ${u.coins}`);
-          });
+            // Sort users by coins in descending order
+            const sortedUsers = usersData.sort((a, b) => b.coins - a.coins);
+            setLeaderboard(sortedUsers);
 
-          // Sort users by coins in descending order
-          const sortedUsers = usersData.sort((a, b) => b.coins - a.coins);
-          setLeaderboard(sortedUsers);
+            // Find the rank of the current user based on coins
+            const userRank =
+              sortedUsers.findIndex(u => u.displayName === user.displayName) +
+              1;
 
-          // Log sorted users
-          console.log("Sorted Users:", sortedUsers);
-
-          // Find the rank of the current user based on coins
-          const userRank = sortedUsers.findIndex(u => u.displayName === user.displayName) + 1;
-
-          // Log the rank
-          console.log(`User Rank for ${user.displayName}:`, userRank);
-
-          // Set the rank, ensuring to check for -1 (not found) and handle it appropriately
-          setRank(userRank > 0 ? userRank : 'N/A');
+            setRank(userRank > 0 ? userRank : 'N/A');
+          }
         }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
       }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
+    };
 
-  fetchUserData();
-}, []);
-
-
-
-
+    fetchUserData();
+  }, []);
 
   const signOutClick = () => {
     auth()
@@ -98,67 +88,71 @@ useEffect(() => {
       source={backgroundImage}
       style={styles.background}
       resizeMode="cover">
-      <View style={styles.container}>
-        <Text style={styles.title}>Profile</Text>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.container}>
+          <Text style={styles.title}>Profile</Text>
+          {/* Profile Section */}
+          <View style={styles.profileSection}>
+            <View style={styles.avatarCircle}>
+              {/* <Image source={leafIcon} style={styles.avatarIcon} /> */}
+            </View>
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>{displayName}</Text>
+              <Text style={styles.userEmail}>{displayEmail}</Text>
+            </View>
+          </View>
+          {/* Stats Section */}
+          <Text style={styles.statsTitle}>Stats</Text>
+          <View style={styles.statsContainer}>
+            <View style={styles.statBox}>
+              <View style={styles.statContent}>
+                <Image source={fireIcon} style={styles.statIcon} />
+                <View>
+                  <Text style={styles.statValue}>{streak}</Text>
+                  <Text style={styles.statLabel}>Day Streak</Text>
+                </View>
+              </View>
+            </View>
+            <View style={styles.statBox}>
+              <View style={styles.statContent}>
+                <Image source={levelIcon} style={styles.statIcon} />
+                <View>
+                  <Text style={styles.statValue}>{level}</Text>
+                  <Text style={styles.statLabel}>Level</Text>
+                </View>
+              </View>
+            </View>
 
-        {/* Profile Section */}
-        <View style={styles.profileSection}>
-          <View style={styles.avatarCircle}>
-            {/* <Image source={leafIcon} style={styles.avatarIcon} /> */}
+            <View style={styles.statBox}>
+              <View style={styles.statContent}>
+                <Image source={coinIcon} style={styles.statIcon} />
+                <View>
+                  <Text style={styles.statValue}>{coins}</Text>
+                  <Text style={styles.statLabel}>Points</Text>
+                </View>
+              </View>
+            </View>
+            <View style={styles.statBox}>
+              <View style={styles.statContent}>
+                <Image source={medalIcon} style={styles.statIcon} />
+                <View>
+                  <Text style={styles.statValue}>
+                    {rank ? `${rank}` : 'N/A'}
+                  </Text>
+                  <Text style={styles.statLabel}>Ranking</Text>
+                </View>
+              </View>
+            </View>
           </View>
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>{displayName}</Text>
-            <Text style={styles.userEmail}>{displayEmail}</Text>
-          </View>
+          <Text style={styles.statsTitle}>Achievements</Text>
+          <Text>More achievements will be added soon!</Text>
+
+          {/* Logout Button */}
+          <TouchableOpacity style={styles.logoutButton} onPress={signOutClick}>
+            <Text style={styles.logoutText}>Log Out</Text>
+          </TouchableOpacity>
         </View>
-
-        {/* Stats Section */}
-        <Text style={styles.statsTitle}>Stats</Text>
-        <View style={styles.statsContainer}>
-          <View style={styles.statBox}>
-            <View style={styles.statContent}>
-              <Image source={fireIcon} style={styles.statIcon} />
-              <View>
-                <Text style={styles.statValue}>{streak}</Text>
-                <Text style={styles.statLabel}>Day Streak</Text>
-              </View>
-            </View>
-          </View>
-          <View style={styles.statBox}>
-            <View style={styles.statContent}>
-              <Image source={levelIcon} style={styles.statIcon} />
-              <View>
-                <Text style={styles.statValue}>{level}</Text>
-                <Text style={styles.statLabel}>Level</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.statBox}>
-            <View style={styles.statContent}>
-              <Image source={coinIcon} style={styles.statIcon} />
-              <View>
-                <Text style={styles.statValue}>{coins}</Text>
-                <Text style={styles.statLabel}>Points</Text>
-              </View>
-            </View>
-          </View>
-          <View style={styles.statBox}>
-            <View style={styles.statContent}>
-              <Image source={medalIcon} style={styles.statIcon} />
-              <View>
-                <Text style={styles.statValue}>{rank ? `${rank}` : 'N/A'}</Text>
-                <Text style={styles.statLabel}>Ranking</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={signOutClick}>
-          <Text style={styles.logoutText}>Log Out</Text>
-        </TouchableOpacity>
-      </View>
+      </ScrollView>
     </ImageBackground>
   );
 };
@@ -169,10 +163,13 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
   },
-  container: {
-    flex: 1,
+  scrollContainer: {
     paddingHorizontal: 20,
     paddingTop: 50,
+  },
+  container: {
+    flex: 1,
+    paddingBottom: 20,
   },
   title: {
     fontSize: 24,
@@ -254,7 +251,7 @@ const styles = StyleSheet.create({
     color: '#374B4A',
   },
   logoutButton: {
-    marginTop: 160,
+    marginTop: 20,
     backgroundColor: '#79A065',
     paddingVertical: 12,
     borderRadius: 30,
