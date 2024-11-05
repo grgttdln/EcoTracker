@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, ImageBackground } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ImageBackground, Alert } from 'react-native';
 import React from 'react';
 
 // Import the local image
@@ -15,6 +15,11 @@ const getRandomPastelColor = () => {
 const ChallengeCard = ({ challenge }) => {
   const headerColor = getRandomPastelColor(); 
 
+  const handlePress = () => {
+    Alert.alert("Hello")
+    
+  }
+
   return (
     <View style={styles.wrapper}>
       <ImageBackground 
@@ -28,7 +33,7 @@ const ChallengeCard = ({ challenge }) => {
           {challenge || 'MEOW'}
         </Text>
         
-        <TouchableOpacity style={styles.completeButton}>
+        <TouchableOpacity style={styles.completeButton} onPress={handlePress}>
           <Text style={styles.buttonText}>Complete</Text>
         </TouchableOpacity>
       </ImageBackground>

@@ -148,7 +148,7 @@ useEffect(() => {
               <Image source={medalIcon} style={styles.statIcon} />
               <View>
                 <Text style={styles.statValue}>{rank ? `${rank}` : 'N/A'}</Text>
-                <Text style={styles.statLabel}>Leaderboard Rank</Text>
+                <Text style={styles.statLabel}>Ranking</Text>
               </View>
             </View>
           </View>
