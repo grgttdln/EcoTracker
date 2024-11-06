@@ -21,6 +21,45 @@ interface AppUsageData {
   totalVisibleTime: number;
 }
 
+const APP_NAME_MAPPINGS: { [key: string]: string } = {
+  'com.facebook.katana': 'Facebook',
+  'com.facebook.orca': 'Facebook Messenger',
+  'com.instagram.android': 'Instagram',
+  'com.ecotrack': 'EcoTrack',
+  'com.twitter.android': 'Twitter',
+  'com.snapchat.android': 'Snapchat',
+  'com.linkedin.android': 'LinkedIn',
+  'com.pinterest': 'Pinterest',
+  'com.reddit.frontpage': 'Reddit',
+  'com.whatsapp': 'WhatsApp',
+  'org.telegram.messenger': 'Telegram',
+  'com.microsoft.office.outlook': 'Outlook',
+  'com.google.android.apps.docs': 'Google Docs',
+  'com.google.android.apps.sheets': 'Google Sheets',
+  'com.google.android.apps.drive': 'Google Drive',
+  'com.microsoft.teams': 'Microsoft Teams',
+  'com.netflix.mediaclient': 'Netflix',
+  'com.spotify.music': 'Spotify',
+  'com.amazon.avod.thirdpartyclient': 'Amazon Prime Video',
+  'com.google.android.youtube': 'YouTube',
+  'com.hulu.plus': 'Hulu',
+  'com.disney.disneyplus': 'Disney+',
+  'tv.twitch.android.app': 'Twitch',
+  'com.skype.raider': 'Skype',
+  'com.viber.voip': 'Viber',
+  'jp.naver.line.android': 'LINE',
+  'com.wechat': 'WeChat',
+  'com.evernote': 'Evernote',
+  'com.notionlabs.notion': 'Notion',
+  'com.slack': 'Slack',
+  'com.vimeo.android.videoapp': 'Vimeo',
+  // Add more mappings as needed.
+};
+
+const getAppDisplayName = (packageName: string): string => {
+  return APP_NAME_MAPPINGS[packageName] || packageName;
+};
+
 export default function Carbon(): React.JSX.Element {
   const getAppCategory = (appName: string): string => {
     const lowerCaseName = appName.toLowerCase();
@@ -119,11 +158,6 @@ export default function Carbon(): React.JSX.Element {
     return hours * (DATA_USAGE_RATES[category] || 0);
   };
 
-  const isDarkMode = useColorScheme() === 'dark';
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
   const [appUsageData, setAppUsageData] = useState<AppUsageData[]>([]);
 
   const formatTime = (milliseconds: number) => {
@@ -181,16 +215,10 @@ export default function Carbon(): React.JSX.Element {
   }, []);
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <View
-          style={{backgroundColor: isDarkMode ? Colors.black : Colors.white}}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <ScrollView contentInsetAdjustmentBehavior="automatic" style={styles.scrollView}>
+        <View style={styles.mainContent}>
           {appUsageData.length > 0 ? (
             [
               'Social Media',
@@ -222,6 +250,7 @@ export default function Carbon(): React.JSX.Element {
                 <View key={category} style={styles.dataContainer}>
                   <Text style={styles.categoryTitle}>{category}</Text>
                   {appsInCategory.map((app, index) => {
+                    const appName = APP_NAME_MAPPINGS[app.packageName] || app.packageName;
                     const appCarbonEmissions = calculateCarbonEmissions(
                       app.totalForegroundTime,
                       category,
@@ -233,7 +262,7 @@ export default function Carbon(): React.JSX.Element {
 
                     return (
                       <View key={index} style={styles.appContainer}>
-                        <Text style={styles.appName}>{app.packageName}</Text>
+                        <Text style={styles.appName}>{appName}</Text>
                         <Text style={styles.appTime}>
                           Time: {formatTime(app.totalForegroundTime)}
                         </Text>
@@ -259,9 +288,7 @@ export default function Carbon(): React.JSX.Element {
               );
             })
           ) : (
-            <Text>
-              No app usage data with visible or foreground time available.
-            </Text>
+            <Text>No app usage data with visible or foreground time available.</Text>
           )}
         </View>
       </ScrollView>
@@ -269,7 +296,18 @@ export default function Carbon(): React.JSX.Element {
   );
 }
 
+
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  scrollView: {
+    backgroundColor: '#ffffff',
+  },
+  mainContent: {
+    backgroundColor: '#ffffff',
+  },
   dataContainer: {
     paddingHorizontal: 24,
     paddingVertical: 8,
