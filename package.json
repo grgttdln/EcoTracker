@@ -22,6 +22,7 @@
     "moment": "^2.30.1",
     "react": "18.3.1",
     "react-native": "0.76.1",
+    "react-native-app-usage": "^0.1.6",
     "react-native-chart-kit": "^6.12.0",
     "react-native-gesture-handler": "^2.20.2",
     "react-native-progress": "^5.0.1",

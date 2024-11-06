@@ -22,6 +22,34 @@ const Dashboard = () => {
   const [displayEmail, setDisplayEmail] = useState('');
   const [streak, setStreak] = useState(0);
   const fireIcon = require('../assets/images/fire.png');
+  const bulbIcon = require('../assets/images/trivia.png');
+  const [facts, setFacts] = useState([]);
+  const [randomFact, setRandomFact] = useState();
+
+  // Function to fetch facts
+  const fetchFacts = async () => {
+    try {
+      const documentSnapshot = await firestore()
+        .collection('SustainableTrivia')
+        .doc('trivias')
+        .get();
+
+      const factsData = documentSnapshot.data().trivia;
+      setFacts(factsData);
+
+      // Generate a random index based on the length of factsData
+      const randomIndex = Math.floor(Math.random() * factsData.length);
+      const randomFact = factsData[randomIndex];
+
+      // console.log('Fetched Challenges Data:', factsData);
+      console.log('Random Fact:', randomFact);
+
+      // Optional: set the random fact to state if you need to display it separately
+      setRandomFact(randomFact);
+    } catch (error) {
+      console.error('Error fetching trivia facts:', error);
+    }
+  };
 
   // Function to handle streak update
   const handleStreakUpdate = async () => {
@@ -41,36 +69,35 @@ const Dashboard = () => {
         // Initialize streakLastChecked and increment streak if it's missing (first-time setup)
         if (!streakLastChecked) {
           await userRef.update({
-            streak: (userData.streak || 0) + 1, // Initialize streak count
-            streakLastChecked: firestore.Timestamp.fromDate(new Date()), // Set streakLastChecked to today's date
+            streak: (userData.streak || 0) + 1,
+            streakLastChecked: firestore.Timestamp.fromDate(new Date()),
           });
           console.log('Streak initialized and incremented!');
         } else if (!streakLastChecked.isSame(today)) {
-          // Increment streak if the user hasn't completed a task today
           await userRef.update({
             streak: (userData.streak || 0) + 1,
-            streakLastChecked: firestore.Timestamp.fromDate(new Date()), // Update for tracking
+            streakLastChecked: firestore.Timestamp.fromDate(new Date()),
           });
           console.log('Streak incremented!');
         }
-        // Fetch the updated streak from Firestore to refresh the UI
         const updatedSnapshot = await userRef.get();
         const updatedData = updatedSnapshot.data();
-        setStreak(updatedData.streak || 0); // Update the streak in the state
+        setStreak(updatedData.streak || 0);
       } catch (error) {
         console.error('Error updating streak: ', error);
       }
     }
   };
 
-  // Fetch user details and streak on mount
   useEffect(() => {
     const user = auth().currentUser;
+
+    fetchFacts();
+
     if (user) {
       setDisplayName(user.displayName || 'User');
       setDisplayEmail(user.email || 'Email');
 
-      // Fetch user stats from Firestore
       const userRef = firestore()
         .collection('UserMain')
         .doc(currentUser.displayName);
@@ -83,7 +110,6 @@ const Dashboard = () => {
     }
   }, []);
 
-  // New useEffect to check if the user missed a day and reset streak if needed
   useEffect(() => {
     const checkMissedDayAndResetStreak = async () => {
       if (currentUser) {
@@ -98,21 +124,19 @@ const Dashboard = () => {
           ? moment(userData.streakLastChecked.toDate()).startOf('day')
           : null;
 
-        // If more than one day has passed since last check, reset the streak
         if (streakLastChecked && today.diff(streakLastChecked, 'days') > 1) {
           await userRef.update({
-            streak: 0, // Reset the streak
+            streak: 0,
           });
           console.log('Streak reset due to missed day.');
-          setStreak(0); // Update the state to reflect the reset streak
+          setStreak(0);
         }
       }
     };
 
     checkMissedDayAndResetStreak();
-  }, [currentUser]); // Runs only when `currentUser` changes, i.e., upon login
+  }, [currentUser]);
 
-  // Fetch challenges and update them on mount
   useEffect(() => {
     const fetchChallenges = async () => {
       if (currentUser) {
@@ -123,10 +147,9 @@ const Dashboard = () => {
             .get();
 
           const taskData = userTask.data();
-          const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+          const today = new Date().toISOString().split('T')[0];
           const lastUpdated = taskData?.lastUpdated || null;
 
-          // Check if challenges need to be renewed
           if (lastUpdated === today && taskData?.challenges) {
             console.log('Existing Challenges:', taskData.challenges);
             setChallenges(taskData.challenges);
@@ -161,7 +184,7 @@ const Dashboard = () => {
                     ...taskData?.challenges,
                     ...challengesDict,
                   },
-                  lastUpdated: today, // Update the lastUpdated field
+                  lastUpdated: today,
                 },
                 {merge: true},
               );
@@ -179,7 +202,6 @@ const Dashboard = () => {
     fetchChallenges();
   }, [currentUser]);
 
-  // Function to shuffle an array
   const shuffleArray = array => {
     return array.sort(() => Math.random() - 0.5);
   };
@@ -187,87 +209,93 @@ const Dashboard = () => {
   return (
     <View style={styles.container}>
       <UserHeader />
-      <View style={styles.paddedContainer}>
-        {/* Daily CO2 Goal Card */}
-        <View style={styles.card}>
-          <View style={styles.row}>
-            <Text style={styles.cardTitle}>Daily CO₂ Goal</Text>
-            <Text style={styles.progressText}>60/100</Text>
-          </View>
-          <ProgressBar progress={0.6} width={325} color="#056B4B" />
-        </View>
-
-        {/* Streak and Challenges */}
-        <View style={styles.streakChallengesContainer}>
-          <View style={styles.streakBox}>
-            <View style={styles.streakContent}>
-              <Image source={fireIcon} style={styles.streakIcon} />
-              <View>
-                <Text style={styles.streakValue}> {streak} </Text>
-                <Text style={styles.streakLabel}>Day Streak</Text>
-              </View>
+      <ScrollView>
+        <View style={styles.paddedContainer}>
+          <View style={styles.triviaCard}>
+            <Image source={bulbIcon} style={styles.triviaIcon} />
+            <View style={styles.triviaTextContainer}>
+              <Text style={styles.triviaTitle}>Did you know?</Text>
+              <Text style={styles.triviaText}>{randomFact && randomFact}</Text>
             </View>
           </View>
 
-          <View style={styles.challengeCard}>
-            <Text style={styles.challengeCount}>12</Text>
-            <Text style={styles.challengeText}>Challenges Completed</Text>
-            <Text style={styles.challengeSubText}>+3 This Week</Text>
-          </View>
-        </View>
-
-        {/* Annual Footprint */}
-        <View style={styles.annualFootprintCard}>
-          <View style={styles.annualFootprintTextContainer}>
-            <Text style={styles.annualFootprintText}>
-              Your Annual Footprint
-            </Text>
-            <Text style={styles.footprintValue}>15.62 T</Text>
-            <Text style={styles.offsetText}>Annual Offsets</Text>
-            <Text style={styles.offsetValue}>5.12 T</Text>
+          <View style={styles.card}>
+            <View style={styles.row}>
+              <Text style={styles.cardTitle}>Daily CO₂ Goal</Text>
+              <Text style={styles.progressText}>60/100</Text>
+            </View>
+            <ProgressBar progress={0.6} width={325} color="#056B4B" />
           </View>
 
-          <ProgressChart
-            data={{data: [0.25, 0.75]}} // 75% for footprint, 25% for offset
-            width={Dimensions.get('window').width * 0.3}
-            height={120}
-            strokeWidth={8}
-            radius={32}
-            chartConfig={{
-              backgroundColor: '#FFFFFF',
-              backgroundGradientFrom: '#FFFFFF',
-              backgroundGradientTo: '#FFFFFF',
-              color: (opacity = 1, index) => {
-                return index === 0
-                  ? `rgba(226, 56, 58, ${opacity})` // Outer color for offsets
-                  : `rgba(35, 117, 86, ${opacity})`; // Inner color for footprint
-              },
-              labelColor: () => `#F47D63`, // color for offsets
-            }}
-            hideLegend={true}
-            style={styles.chartStyle}
-          />
-        </View>
-        <Text style={styles.challengesLabel}>Today's Challenges</Text>
-      </View>
+          <View style={styles.streakChallengesContainer}>
+            <View style={styles.streakBox}>
+              <View style={styles.streakContent}>
+                <Image source={fireIcon} style={styles.streakIcon} />
+                <View>
+                  <Text style={styles.streakValue}> {streak} </Text>
+                  <Text style={styles.streakLabel}>Day Streak</Text>
+                </View>
+              </View>
+            </View>
 
-      {/* Challenges */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContainer}>
-        {Object.keys(challenges).length > 0 ? (
-          Object.keys(challenges).map((challenge, index) => (
-            <ChallengeCard
-              key={index}
-              challenge={challenge}
-              isCompleted={challenges[challenge]}
-              onComplete={handleStreakUpdate} // Pass the streak update function here
+            <View style={styles.challengeCard}>
+              <Text style={styles.challengeCount}>12</Text>
+              <Text style={styles.challengeText}>Challenges Completed</Text>
+              <Text style={styles.challengeSubText}>+3 This Week</Text>
+            </View>
+          </View>
+
+          <View style={styles.annualFootprintCard}>
+            <View style={styles.annualFootprintTextContainer}>
+              <Text style={styles.annualFootprintText}>
+                Your Annual Footprint
+              </Text>
+              <Text style={styles.footprintValue}>15.62 T</Text>
+              <Text style={styles.offsetText}>Annual Offsets</Text>
+              <Text style={styles.offsetValue}>5.12 T</Text>
+            </View>
+
+            <ProgressChart
+              data={{data: [0.25, 0.75]}}
+              width={Dimensions.get('window').width * 0.3}
+              height={120}
+              strokeWidth={8}
+              radius={32}
+              chartConfig={{
+                backgroundColor: '#FFFFFF',
+                backgroundGradientFrom: '#FFFFFF',
+                backgroundGradientTo: '#FFFFFF',
+                color: (opacity = 1, index) => {
+                  return index === 0
+                    ? `rgba(226, 56, 58, ${opacity})`
+                    : `rgba(35, 117, 86, ${opacity})`;
+                },
+                labelColor: () => `#F47D63`,
+              }}
+              hideLegend={true}
+              style={styles.chartStyle}
             />
-          ))
-        ) : (
-          <Text>No challenges available.</Text>
-        )}
+          </View>
+          <Text style={styles.challengesLabel}>Today's Challenges</Text>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContainer}>
+          {Object.keys(challenges).length > 0 ? (
+            Object.keys(challenges).map((challenge, index) => (
+              <ChallengeCard
+                key={index}
+                challenge={challenge}
+                isCompleted={challenges[challenge]}
+                onComplete={handleStreakUpdate}
+              />
+            ))
+          ) : (
+            <Text>No challenges available.</Text>
+          )}
+        </ScrollView>
       </ScrollView>
     </View>
   );
@@ -286,6 +314,7 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     paddingHorizontal: 10,
+    marginBottom: 130,
   },
   card: {
     backgroundColor: '#FFF',
@@ -437,5 +466,31 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 10,
+  },
+  triviaCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2D5F3B', // Green background color
+    borderRadius: 20,
+    padding: 15,
+    marginBottom: 10,
+  },
+  triviaIcon: {
+    width: 80,
+    height: 80,
+    marginRight: 8,
+  },
+  triviaTextContainer: {
+    flex: 1,
+  },
+  triviaTitle: {
+    fontSize: 18,
+    fontFamily: 'Poppins-ExtraBoldItalic',
+    color: '#FFFFFF',
+  },
+  triviaText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontFamily: 'Poppins-Medium',
   },
 });
