@@ -25,6 +25,41 @@ const Dashboard = () => {
   const bulbIcon = require('../assets/images/trivia.png');
   const [facts, setFacts] = useState([]);
   const [randomFact, setRandomFact] = useState();
+  // State to track completed challenges count and progress
+  const [completedCount, setCompletedCount] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  // Function to update completed challenges in real-time
+  useEffect(() => {
+    if (!currentUser) return;
+
+    // Firestore listener to track real-time changes in user's challenges
+    const subscriber = firestore()
+      .collection('UserMain')
+      .doc(currentUser.displayName)
+      .onSnapshot(
+        documentSnapshot => {
+          if (documentSnapshot.exists) {
+            const data = documentSnapshot.data();
+            const updatedChallenges = data.challenges || {};
+            
+            // Update challenges state
+            setChallenges(updatedChallenges);
+
+            // Count completed challenges and update progress
+            const completed = Object.values(updatedChallenges).filter(status => status === true).length;
+            const limitedCompleted = Math.min(completed, 5);
+            setCompletedCount(limitedCompleted);
+            setProgress(limitedCompleted / 5);
+          }
+        },
+        error => {
+          console.error('Error fetching challenges data: ', error);
+        }
+      );
+
+    return () => subscriber(); // Clean up on component unmount
+  }, [currentUser]);
 
   // Function to fetch facts
   const fetchFacts = async () => {
@@ -141,19 +176,22 @@ const Dashboard = () => {
     const fetchChallenges = async () => {
       if (currentUser) {
         try {
+          // Fetch user-specific data
           const userTask = await firestore()
             .collection('UserMain')
             .doc(currentUser.displayName)
             .get();
-
+          
           const taskData = userTask.data();
           const today = new Date().toISOString().split('T')[0];
           const lastUpdated = taskData?.lastUpdated || null;
 
+          // If challenges were set today, use them
           if (lastUpdated === today && taskData?.challenges) {
             console.log('Existing Challenges:', taskData.challenges);
             setChallenges(taskData.challenges);
           } else {
+            // Fetch challenge pool data for shuffling
             const documentSnapshot = await firestore()
               .collection('UserChallenges')
               .doc('challenges')
@@ -161,6 +199,7 @@ const Dashboard = () => {
             const challengesData = documentSnapshot.data();
             console.log('Fetched Challenges Data:', challengesData);
 
+            // Shuffle and select only 5 challenges
             const shuffledChallenges = shuffleArray(
               challengesData.challenge,
             ).slice(0, 5);
@@ -175,6 +214,7 @@ const Dashboard = () => {
 
             setChallenges(challengesDict);
 
+            // Save to UserMain collection with today's date
             await firestore()
               .collection('UserMain')
               .doc(currentUser.displayName)
@@ -221,10 +261,10 @@ const Dashboard = () => {
 
           <View style={styles.card}>
             <View style={styles.row}>
-              <Text style={styles.cardTitle}>Daily CO₂ Goal</Text>
-              <Text style={styles.progressText}>60/100</Text>
+              <Text style={styles.cardTitle}>Sustainable Progress</Text>
+              <Text style={styles.progressText}>{completedCount}/5</Text>
             </View>
-            <ProgressBar progress={0.6} width={325} color="#056B4B" />
+            <ProgressBar progress={progress} width={325} color="#056B4B" />
           </View>
 
           <View style={styles.streakChallengesContainer}>
@@ -284,18 +324,20 @@ const Dashboard = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.scrollContainer}>
           {Object.keys(challenges).length > 0 ? (
-            Object.keys(challenges).map((challenge, index) => (
-              <ChallengeCard
-                key={index}
-                challenge={challenge}
-                isCompleted={challenges[challenge]}
-                onComplete={handleStreakUpdate}
-              />
-            ))
+            Object.keys(challenges)
+              .slice(0, 5) // Limit to the first 5 challenges
+              .map((challenge, index) => (
+                <ChallengeCard
+                  key={index}
+                  challenge={challenge}
+                  isCompleted={challenges[challenge]}
+                  onComplete={handleStreakUpdate}
+                />
+              ))
           ) : (
             <Text>No challenges available.</Text>
           )}
-        </ScrollView>
+        </ScrollView>     
       </ScrollView>
     </View>
   );
