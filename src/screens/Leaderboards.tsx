@@ -11,8 +11,7 @@ import UserHeader from '../components/UserHeader';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
-import crownIcon from '../assets/images/crown.png';
-
+const crownIcon = require('../assets/images/crown.png') ;
 const level = require('../assets/images/level_bg.png');
 const medalIcon = require('../assets/images/medal_podium.png');
 

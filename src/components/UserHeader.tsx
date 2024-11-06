@@ -9,14 +9,14 @@ const level = require('../assets/images/level_bg.png');
 const UserHeader = () => {
   const currentUser = auth().currentUser;
   const [stats, setStats] = useState({});
-  const [loading, setLoading] = useState(true); // Initialize loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!currentUser) return; // Return if no user is logged in
+    if (!currentUser) return;
 
     const subscriber = firestore()
       .collection('UserMain')
-      .doc(currentUser.displayName) // Use uid to fetch the document
+      .doc(currentUser.displayName)
       .onSnapshot(
         documentSnapshot => {
           if (documentSnapshot.exists) {
@@ -27,27 +27,34 @@ const UserHeader = () => {
           } else {
             console.log('User does not exist!');
           }
-          console.log('User data: ', documentSnapshot.data());
-          setLoading(false); // Set loading to false after fetching data
+          setLoading(false);
         },
         error => {
           console.error('Error fetching user data: ', error);
-          setLoading(false); // Handle loading state on error
+          setLoading(false);
         },
       );
 
     return () => subscriber();
-  }, [currentUser?.uid]); // Add currentUser.uid as a dependency
+  }, [currentUser?.uid]);
+
+  const placeholderAvatar = name =>
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      name,
+    )}&background=619E7B&color=fff&size=60`;
 
   if (loading) {
-    return <Text>Loading...</Text>; // Add loading indicator
+    return <Text>Loading...</Text>;
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.mainContent}>
         <View style={styles.profileSection}>
-          <View style={styles.avatarCircle} />
+          <Image
+            source={{uri: placeholderAvatar(currentUser?.displayName)}}
+            style={styles.avatarImage}
+          />
           <View style={styles.textContainer}>
             <Text
               style={
@@ -60,13 +67,11 @@ const UserHeader = () => {
         <View style={styles.statsSection}>
           <View style={styles.statContainer}>
             <Image source={coin} style={styles.statIcon} />
-            <Text style={styles.statValue}>{stats.coins}</Text>{' '}
-            {/* Use stats */}
+            <Text style={styles.statValue}>{stats.coins}</Text>
           </View>
 
           <View style={styles.levelContainer}>
-            <Text style={styles.levelValue}>{stats.level}</Text>{' '}
-            {/* Use stats */}
+            <Text style={styles.levelValue}>{stats.level}</Text>
             <Image source={level} style={styles.levelIcon} />
           </View>
         </View>
@@ -91,11 +96,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  avatarCircle: {
+  avatarImage: {
     width: 48,
     height: 48,
+    borderRadius: 40,
     backgroundColor: '#E5E5E5',
-    borderRadius: 24,
     borderWidth: 1,
     borderColor: '#EAEAEA',
   },

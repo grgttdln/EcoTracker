@@ -41,13 +41,13 @@ const Profile = ({ navigation }) => {
             setCoins(userData.coins || 0);
 
             // Calculate level based on coins (1 level per 100 coins)
-          const calculatedLevel = Math.min(Math.floor((userData.coins || 0) / 100) + 1, 99);
-          setLevel(calculatedLevel);
+            const calculatedLevel = Math.min(Math.floor((userData.coins || 0) / 100) + 1, 99);
+            setLevel(calculatedLevel);
 
-          // Update Firestore if level has changed and is within the cap
-          if (calculatedLevel !== userData.level) {
-            await userRef.update({ level: calculatedLevel });
-          }
+            // Update Firestore if level has changed and is within the cap
+            if (calculatedLevel !== userData.level) {
+              await userRef.update({ level: calculatedLevel });
+            }
           }
         });
 
@@ -84,19 +84,34 @@ const Profile = ({ navigation }) => {
     navigation.navigate('Welcome');
   };
 
+  const placeholderAvatar = (name) =>
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      name
+    )}&background=619E7B&color=fff&size=200`;
+
   return (
-    <ImageBackground source={backgroundImage} style={styles.background} resizeMode="cover">
+    <ImageBackground
+      source={backgroundImage}
+      style={styles.background}
+      resizeMode="cover"
+    >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.container}>
           <Text style={styles.title}>Profile</Text>
           {/* Profile Section */}
           <View style={styles.profileSection}>
-            <View style={styles.avatarCircle} />
+            <View style={styles.avatarCircle}>
+              <Image
+                source={{ uri: placeholderAvatar(currentUser?.displayName) }}
+                style={styles.avatarIcon}
+              />
+            </View>
             <View style={styles.userInfo}>
               <Text style={styles.userName}>{displayName}</Text>
               <Text style={styles.userEmail}>{displayEmail}</Text>
             </View>
           </View>
+
           {/* Stats Section */}
           <Text style={styles.statsTitle}>Stats</Text>
           <View style={styles.statsContainer}>
@@ -138,6 +153,7 @@ const Profile = ({ navigation }) => {
               </View>
             </View>
           </View>
+
           <Text style={styles.statsTitle}>Achievements</Text>
           <Text>More achievements will be added soon!</Text>
 
@@ -154,7 +170,6 @@ const Profile = ({ navigation }) => {
 export default Profile;
 
 const styles = StyleSheet.create({
-  // Style objects remain the same as your original code.
   background: {
     flex: 1,
   },
@@ -186,8 +201,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarIcon: {
-    width: 40,
-    height: 40,
+    width: 78,
+    height: 78,
+    borderRadius: 40,
+    backgroundColor: '#E5E5E5',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
   },
   userInfo: {
     marginLeft: 15,
