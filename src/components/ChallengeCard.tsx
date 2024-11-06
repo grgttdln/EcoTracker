@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,6 +7,8 @@ import {
   ImageBackground,
   Modal,
 } from 'react-native';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
 const backgroundImage = require('../assets/images/gradient_bg.png');
 
@@ -18,19 +20,99 @@ const getRandomPastelColor = () => {
   return `rgb(${red}, ${green}, ${blue})`;
 };
 
-const ChallengeCard = ({challenge}) => {
+const ChallengeCard = ({ challenge, isCompleted: initialIsCompleted }) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(initialIsCompleted);
   const headerColor = getRandomPastelColor();
+  const [currCoins, setCurrCoins] = useState();
+
+  const user = auth().currentUser;
+
+  useEffect(() => {
+    // Ensure the state updates if the initial prop changes
+    setIsCompleted(initialIsCompleted);
+  }, [initialIsCompleted]);
+
+   
+  useEffect(() => {
+    const fetchCoins = () => {
+      if (user) {
+        try {
+          // Set up the Firestore listener
+          const unsubscribe = firestore()
+            .collection('UserMain')
+            .doc(user.displayName) // Use uid or displayName to fetch the document
+            .onSnapshot(
+              (documentSnapshot) => {
+                if (documentSnapshot.exists) {
+                  const userData = documentSnapshot.data();
+                  const coins = userData.coins; // Access the coins field
+  
+                  setCurrCoins(coins); // Update the state with the coins value
+                } else {
+                  console.log('User does not exist!');
+                }
+              },
+              (error) => {
+                console.error('Error fetching coins: ', error);
+              }
+            );
+  
+          // Return the unsubscribe function to clean up the listener
+          return () => unsubscribe();
+        } catch (error) {
+          console.error('Error setting up listener: ', error);
+        }
+      } else {
+        console.log('No user is currently logged in.');
+      }
+    };
+
+    console.log('Current Coins:', currCoins);
+  
+    // Call the fetchCoins function
+    const unsubscribe = fetchCoins();
+  
+    // Clean up the listener on component unmount
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [currCoins]); // Add currentUser as a dependency
+  
+
+
 
   const handlePress = () => {
     setModalVisible(true);
   };
 
-  const handleConfirm = confirmed => {
+  const handleConfirm = (confirmed) => {
     setModalVisible(false);
-    // Handle the 'Yes' or 'No' action here
     if (confirmed) {
       console.log('Task completed!');
+      setIsCompleted(true); // Mark the challenge as completed
+
+     
+      firestore()
+        .collection('UserMain')
+        .doc(user.displayName)
+        .set(
+          {
+            challenges: {
+              [challenge]: true, // Set the challenge as completed
+            },
+          },
+          { merge: true }
+        );
+
+      // Update the coins in the database
+      firestore()
+      .collection('UserMain')
+      .doc(user.displayName)
+      .update({
+        coins: parseInt(currCoins, 10) + 10, // Convert currCoins to an integer and add 10
+      });
+    
     } else {
       console.log('Task not completed.');
     }
@@ -42,12 +124,25 @@ const ChallengeCard = ({challenge}) => {
         source={backgroundImage}
         style={styles.container}
         imageStyle={styles.imageStyle}>
-        <View style={[styles.header, {backgroundColor: headerColor}]} />
+        <View style={[styles.header, { backgroundColor: headerColor }]} />
 
         <Text style={styles.challengeText}>{challenge || 'MEOW'}</Text>
 
-        <TouchableOpacity style={styles.completeButton} onPress={handlePress}>
-          <Text style={styles.buttonText}>Complete</Text>
+        {/* Disable the button when the challenge is completed */}
+        <TouchableOpacity
+          style={[
+            styles.completeButton,
+            isCompleted && styles.disabledButton, // Apply different style if completed
+          ]}
+          onPress={handlePress}
+          disabled={isCompleted}>
+          <Text
+            style={[
+              styles.buttonText,
+              isCompleted && styles.disabledButtonText, // Change text color if completed
+            ]}>
+            {isCompleted ? 'Completed' : 'Complete'}
+          </Text>
         </TouchableOpacity>
       </ImageBackground>
 
@@ -61,8 +156,7 @@ const ChallengeCard = ({challenge}) => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Confirm Task Completion</Text>
             <Text style={styles.modalText}>
-              Just checking in! Did you finish drinking your 8 glasses of water
-              today?
+              Just checking in! {challenge} today?
             </Text>
             <View style={styles.buttonContainer}>
               <TouchableOpacity
@@ -114,7 +208,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: 'Poppins-Medium',
     fontSize: 18,
-
     marginTop: 80,
   },
   completeButton: {
@@ -126,13 +219,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 10,
     left: '50%',
-    transform: [{translateX: -95}],
+    transform: [{ translateX: -95 }],
     width: 230,
   },
   buttonText: {
     color: '#689F38',
     fontFamily: 'Poppins-SemiBold',
     fontSize: 17,
+  },
+  disabledButton: {
+    backgroundColor: '#D3D3D3', // Light grey color for disabled state
+  },
+  disabledButtonText: {
+    color: '#A9A9A9', // Dark grey color for text in disabled state
   },
   modalOverlay: {
     flex: 1,
@@ -150,7 +249,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontFamily: 'Poppins-SemiBold',
-
     color: '#334E2A',
     marginBottom: 25,
   },

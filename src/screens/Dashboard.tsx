@@ -91,10 +91,9 @@ const Dashboard = () => {
             await firestore()
               .collection('UserMain')
               .doc(currentUser.displayName)
-              .set(
+              .add(
                 {
                   challenges: {
-                    ...taskData?.challenges,
                     ...challengesDict,
                   },
                   lastUpdated: today, // Update the lastUpdated field
@@ -189,7 +188,7 @@ const Dashboard = () => {
         contentContainerStyle={styles.scrollContainer}>
         {Object.keys(challenges).length > 0 ? (
           Object.keys(challenges).map((challenge, index) => (
-            <ChallengeCard key={index} challenge={challenge} />
+            <ChallengeCard key={index} challenge={challenge} isCompleted={challenges[challenge]} />
           ))
         ) : (
           <Text>No challenges available.</Text>
