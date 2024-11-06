@@ -76,7 +76,7 @@ const Leaderboards = () => {
         />
         <View style={styles.levelIconContainer}>
           <Image source={level} style={styles.levelIconPodium} />
-          <Text style={styles.levelText}>{index + 1}</Text>
+          <Text style={styles.levelText}>{item.level}</Text>
         </View>
 
         <Text style={styles.podiumName}>{item.id}</Text>

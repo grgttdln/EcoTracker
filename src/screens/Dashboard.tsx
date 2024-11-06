@@ -13,6 +13,7 @@ import UserHeader from '../components/UserHeader';
 import auth from '@react-native-firebase/auth';
 import ChallengeCard from '../components/ChallengeCard';
 import firestore from '@react-native-firebase/firestore';
+import moment from 'moment'; // To compare dates easily
 
 const Dashboard = () => {
   const currentUser = auth().currentUser;
@@ -22,7 +23,47 @@ const Dashboard = () => {
   const [streak, setStreak] = useState(0);
   const fireIcon = require('../assets/images/fire.png');
 
-  // Fetch Streak
+  // Function to handle streak update
+  const handleStreakUpdate = async () => {
+    if (currentUser) {
+      try {
+        const userRef = firestore()
+          .collection('UserMain')
+          .doc(currentUser.displayName);
+        const userSnapshot = await userRef.get();
+        const userData = userSnapshot.data();
+
+        const today = moment().startOf('day');
+        const streakLastChecked = userData?.streakLastChecked
+          ? moment(userData.streakLastChecked.toDate()).startOf('day')
+          : null;
+
+        // Initialize streakLastChecked and increment streak if it's missing (first-time setup)
+        if (!streakLastChecked) {
+          await userRef.update({
+            streak: (userData.streak || 0) + 1, // Initialize streak count
+            streakLastChecked: firestore.Timestamp.fromDate(new Date()), // Set streakLastChecked to today's date
+          });
+          console.log('Streak initialized and incremented!');
+        } else if (!streakLastChecked.isSame(today)) {
+          // Increment streak if the user hasn't completed a task today
+          await userRef.update({
+            streak: (userData.streak || 0) + 1,
+            streakLastChecked: firestore.Timestamp.fromDate(new Date()), // Update for tracking
+          });
+          console.log('Streak incremented!');
+        }
+        // Fetch the updated streak from Firestore to refresh the UI
+        const updatedSnapshot = await userRef.get();
+        const updatedData = updatedSnapshot.data();
+        setStreak(updatedData.streak || 0); // Update the streak in the state
+      } catch (error) {
+        console.error('Error updating streak: ', error);
+      }
+    }
+  };
+
+  // Fetch user details and streak on mount
   useEffect(() => {
     const user = auth().currentUser;
     if (user) {
@@ -42,11 +83,36 @@ const Dashboard = () => {
     }
   }, []);
 
-  // Function to shuffle an array
-  const shuffleArray = array => {
-    return array.sort(() => Math.random() - 0.5);
-  };
+  // New useEffect to check if the user missed a day and reset streak if needed
+  useEffect(() => {
+    const checkMissedDayAndResetStreak = async () => {
+      if (currentUser) {
+        const userRef = firestore()
+          .collection('UserMain')
+          .doc(currentUser.displayName);
+        const userSnapshot = await userRef.get();
+        const userData = userSnapshot.data();
 
+        const today = moment().startOf('day');
+        const streakLastChecked = userData?.streakLastChecked
+          ? moment(userData.streakLastChecked.toDate()).startOf('day')
+          : null;
+
+        // If more than one day has passed since last check, reset the streak
+        if (streakLastChecked && today.diff(streakLastChecked, 'days') > 1) {
+          await userRef.update({
+            streak: 0, // Reset the streak
+          });
+          console.log('Streak reset due to missed day.');
+          setStreak(0); // Update the state to reflect the reset streak
+        }
+      }
+    };
+
+    checkMissedDayAndResetStreak();
+  }, [currentUser]); // Runs only when `currentUser` changes, i.e., upon login
+
+  // Fetch challenges and update them on mount
   useEffect(() => {
     const fetchChallenges = async () => {
       if (currentUser) {
@@ -57,7 +123,6 @@ const Dashboard = () => {
             .get();
 
           const taskData = userTask.data();
-
           const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
           const lastUpdated = taskData?.lastUpdated || null;
 
@@ -113,6 +178,11 @@ const Dashboard = () => {
 
     fetchChallenges();
   }, [currentUser]);
+
+  // Function to shuffle an array
+  const shuffleArray = array => {
+    return array.sort(() => Math.random() - 0.5);
+  };
 
   return (
     <View style={styles.container}>
@@ -178,7 +248,7 @@ const Dashboard = () => {
             style={styles.chartStyle}
           />
         </View>
-        <Text style={styles.challengesLabel}> Today's Challenges </Text>
+        <Text style={styles.challengesLabel}>Today's Challenges</Text>
       </View>
 
       {/* Challenges */}
@@ -192,6 +262,7 @@ const Dashboard = () => {
               key={index}
               challenge={challenge}
               isCompleted={challenges[challenge]}
+              onComplete={handleStreakUpdate} // Pass the streak update function here
             />
           ))
         ) : (
@@ -261,7 +332,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   streakBox: {
-    flex: 1, // Make this box take up less space
+    flex: 1,
     maxWidth: '40%', // Limit the width
     backgroundColor: 'rgba(123, 160, 101, 0.90)',
     borderRadius: 10,
@@ -278,7 +349,7 @@ const styles = StyleSheet.create({
   streakIcon: {
     width: 30,
     height: 30,
-    marginRight: 8,
+    marginRight: 3,
   },
   streakValue: {
     fontSize: 18,

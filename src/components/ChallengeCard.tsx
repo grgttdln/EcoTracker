@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   StyleSheet,
   Text,
@@ -20,11 +20,15 @@ const getRandomPastelColor = () => {
   return `rgb(${red}, ${green}, ${blue})`;
 };
 
-const ChallengeCard = ({ challenge, isCompleted: initialIsCompleted }) => {
+const ChallengeCard = ({
+  challenge,
+  isCompleted: initialIsCompleted,
+  onComplete,
+}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isCompleted, setIsCompleted] = useState(initialIsCompleted);
+  const [currCoins, setCurrCoins] = useState<number | null>(null);
   const headerColor = getRandomPastelColor();
-  const [currCoins, setCurrCoins] = useState();
 
   const user = auth().currentUser;
 
@@ -33,86 +37,74 @@ const ChallengeCard = ({ challenge, isCompleted: initialIsCompleted }) => {
     setIsCompleted(initialIsCompleted);
   }, [initialIsCompleted]);
 
-   
   useEffect(() => {
-    const fetchCoins = () => {
+    const fetchCoins = async () => {
       if (user) {
         try {
-          // Set up the Firestore listener
-          const unsubscribe = firestore()
+          const userDoc = await firestore()
             .collection('UserMain')
-            .doc(user.displayName) // Use uid or displayName to fetch the document
-            .onSnapshot(
-              (documentSnapshot) => {
-                if (documentSnapshot.exists) {
-                  const userData = documentSnapshot.data();
-                  const coins = userData.coins; // Access the coins field
-  
-                  setCurrCoins(coins); // Update the state with the coins value
-                } else {
-                  console.log('User does not exist!');
-                }
-              },
-              (error) => {
-                console.error('Error fetching coins: ', error);
-              }
-            );
-  
-          // Return the unsubscribe function to clean up the listener
-          return () => unsubscribe();
+            .doc(user.displayName)
+            .get();
+
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            setCurrCoins(userData?.coins || 0);
+          } else {
+            console.log('User does not exist!');
+          }
         } catch (error) {
-          console.error('Error setting up listener: ', error);
+          console.error('Error fetching coins: ', error);
         }
       } else {
         console.log('No user is currently logged in.');
       }
     };
 
-    console.log('Current Coins:', currCoins);
-  
-    // Call the fetchCoins function
-    const unsubscribe = fetchCoins();
-  
-    // Clean up the listener on component unmount
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, [currCoins]); // Add currentUser as a dependency
-  
-
-
+    fetchCoins(); // Call fetchCoins when component mounts
+  }, [user]); // Runs when user changes
 
   const handlePress = () => {
     setModalVisible(true);
   };
 
-  const handleConfirm = (confirmed) => {
+  const handleConfirm = async (confirmed: boolean) => {
     setModalVisible(false);
     if (confirmed) {
       console.log('Task completed!');
       setIsCompleted(true); // Mark the challenge as completed
+      if (onComplete) {
+        onComplete();
+      }
 
-     
-      firestore()
-        .collection('UserMain')
-        .doc(user.displayName)
-        .set(
-          {
-            challenges: {
-              [challenge]: true, // Set the challenge as completed
+      try {
+        await firestore()
+          .collection('UserMain')
+          .doc(user.displayName)
+          .set(
+            {
+              challenges: {
+                [challenge]: true, // Set the challenge as completed
+              },
             },
-          },
-          { merge: true }
-        );
+            {merge: true},
+          );
 
-      // Update the coins in the database
-      firestore()
-      .collection('UserMain')
-      .doc(user.displayName)
-      .update({
-        coins: parseInt(currCoins, 10) + 10, // Convert currCoins to an integer and add 10
-      });
-    
+        // Safely update coins using transaction
+        if (currCoins !== null) {
+          const userRef = firestore()
+            .collection('UserMain')
+            .doc(user.displayName);
+          await firestore().runTransaction(async transaction => {
+            const userDoc = await transaction.get(userRef);
+            const currentCoins = userDoc.data()?.coins || 0;
+            transaction.update(userRef, {
+              coins: currentCoins + 10, // Add 10 coins to current total
+            });
+          });
+        }
+      } catch (error) {
+        console.error('Error updating challenge or coins: ', error);
+      }
     } else {
       console.log('Task not completed.');
     }
@@ -124,7 +116,7 @@ const ChallengeCard = ({ challenge, isCompleted: initialIsCompleted }) => {
         source={backgroundImage}
         style={styles.container}
         imageStyle={styles.imageStyle}>
-        <View style={[styles.header, { backgroundColor: headerColor }]} />
+        <View style={[styles.header, {backgroundColor: headerColor}]} />
 
         <Text style={styles.challengeText}>{challenge || 'MEOW'}</Text>
 
@@ -156,7 +148,7 @@ const ChallengeCard = ({ challenge, isCompleted: initialIsCompleted }) => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Confirm Task Completion</Text>
             <Text style={styles.modalText}>
-              Just checking in! {challenge} today?
+              Just checking in! Did you complete the task "{challenge}" today?
             </Text>
             <View style={styles.buttonContainer}>
               <TouchableOpacity
@@ -219,7 +211,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 10,
     left: '50%',
-    transform: [{ translateX: -95 }],
+    transform: [{translateX: -95}],
     width: 230,
   },
   buttonText: {

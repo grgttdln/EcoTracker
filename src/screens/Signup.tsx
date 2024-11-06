@@ -32,9 +32,6 @@ const Signup = ({navigation}: any) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-
-  
-
   const validateInputs = () => {
     if (!email || !password || !confirmPassword || !username) {
       Alert.alert('Error', 'All fields are required.');
@@ -60,28 +57,22 @@ const Signup = ({navigation}: any) => {
     return true;
   };
 
-
   const AddUser = async () => {
-    
     console.log('Firebase config:', firebase.app().options);
     try {
-      await firestore()
-        .collection('UserInfo')
-        .doc(username) 
-        .set({
-          email: email,
-        });
+      await firestore().collection('UserInfo').doc(username).set({
+        email: email,
+      });
 
-        await firestore()
+      await firestore()
         .collection('UserMain')
         .doc(username) // Specify the document ID
         .set({
-          coins: "10",
-          level: "1",
-          streak: "0",
+          coins: '10',
+          level: '1',
+          streak: 0,
         });
 
-      
       console.log('User added!');
     } catch (error) {
       console.error('Error adding user: ', error);
