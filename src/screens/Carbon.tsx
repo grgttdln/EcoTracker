@@ -9,14 +9,9 @@ import {
   useColorScheme,
   View,
   Alert,
-  Linking,
 } from 'react-native';
-import {Colors, Header} from 'react-native/Libraries/NewAppScreen';
+import {Colors} from 'react-native/Libraries/NewAppScreen';
 import AppUsage from 'react-native-app-usage';
-import NetInfo from '@react-native-community/netinfo';
-import {NativeModules} from 'react-native';
-
-const {DataUsageModule} = NativeModules;
 
 interface AppUsageData {
   packageName: string;
@@ -26,34 +21,30 @@ interface AppUsageData {
   totalVisibleTime: number;
 }
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
 export default function Carbon(): React.JSX.Element {
   const getAppCategory = (appName: string): string => {
     const lowerCaseName = appName.toLowerCase();
+    const nameParts = lowerCaseName.split('.');
+    const matchesCategory = (parts: string[], categoryArray: string[]) =>
+      parts.some(part => categoryArray.includes(part));
 
-    // Social Media apps
     if (
-      [
-        'facebook',
+      matchesCategory(nameParts, [
+        'katana',
         'instagram',
         'twitter',
-        'tiktok',
+        'ugc',
         'linkedin',
         'pinterest',
         'snapchat',
         'reddit',
         'messenger',
-      ].includes(lowerCaseName)
+      ])
     ) {
       return 'Social Media';
     }
-
-    // Productivity apps
     if (
-      [
+      matchesCategory(nameParts, [
         'docs',
         'sheets',
         'drive',
@@ -64,14 +55,12 @@ export default function Carbon(): React.JSX.Element {
         'slack',
         'teams',
         'ecotrack',
-      ].includes(lowerCaseName)
+      ])
     ) {
       return 'Productivity';
     }
-
-    // Entertainment apps
     if (
-      [
+      matchesCategory(nameParts, [
         'youtube',
         'netflix',
         'spotify',
@@ -80,37 +69,41 @@ export default function Carbon(): React.JSX.Element {
         'disney',
         'twitch',
         'vimeo',
-      ].includes(lowerCaseName)
+      ])
     ) {
       return 'Entertainment';
     }
-
-    // Messaging apps
     if (
-      [
+      matchesCategory(nameParts, [
         'whatsapp',
         'telegram',
-        'messenger',
+        'orca',
         'signal',
         'viber',
         'line',
         'wechat',
         'skype',
-      ].includes(lowerCaseName)
+      ])
     ) {
       return 'Messaging';
     }
-
     return 'Other';
   };
 
-  // Emission rates per hour for each category
   const EMISSION_RATES = {
-    'Social Media': 0.1, // kg CO₂ per hour
-    Productivity: 0.08, // assuming 0.08 kg CO₂ per hour for Productivity
-    Entertainment: 0.15, // kg CO₂ per hour
-    Messaging: 0.05, // kg CO₂ per hour
-    Other: 0.07, // assuming 0.07 kg CO₂ per hour for Other
+    'Social Media': 0.1,
+    Productivity: 0.08,
+    Entertainment: 0.15,
+    Messaging: 0.05,
+    Other: 0.07,
+  };
+
+  const DATA_USAGE_RATES = {
+    'Social Media': 150,
+    Productivity: 30,
+    Entertainment: 1000,
+    Messaging: 50,
+    Other: 60,
   };
 
   const calculateCarbonEmissions = (
@@ -118,8 +111,12 @@ export default function Carbon(): React.JSX.Element {
     category: string,
   ) => {
     const hours = timeInMilliseconds / (1000 * 60 * 60);
-    const rate = EMISSION_RATES[category] || 0;
-    return hours * rate; // kg CO₂
+    return hours * (EMISSION_RATES[category] || 0);
+  };
+
+  const calculateDataUsage = (timeInMilliseconds: number, category: string) => {
+    const hours = timeInMilliseconds / (1000 * 60 * 60);
+    return hours * (DATA_USAGE_RATES[category] || 0);
   };
 
   const isDarkMode = useColorScheme() === 'dark';
@@ -128,34 +125,11 @@ export default function Carbon(): React.JSX.Element {
   };
 
   const [appUsageData, setAppUsageData] = useState<AppUsageData[]>([]);
-  const [connectionInfo, setConnectionInfo] = useState<string>('');
-  const [wifiDataUsage, setWifiDataUsage] = useState<number | null>(null);
-  const [mobileDataUsage, setMobileDataUsage] = useState<number | null>(null);
-
-  const openSettingsAlert = () => {
-    Alert.alert(
-      'Permission Required',
-      'To view data usage, please enable Usage Access in your device settings.',
-      [
-        {text: 'Cancel', style: 'cancel'},
-        {text: 'Open Settings', onPress: () => Linking.openSettings()},
-      ],
-    );
-  };
 
   const formatTime = (milliseconds: number) => {
-    if (!milliseconds) {
-      return 'No data';
-    }
-
-    const seconds = Math.floor((milliseconds / 1000) % 60);
-    const minutes = Math.floor((milliseconds / (1000 * 60)) % 60);
     const hours = Math.floor(milliseconds / (1000 * 60 * 60));
-
-    const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes
-      .toString()
-      .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    return formattedTime;
+    const minutes = Math.floor((milliseconds / (1000 * 60)) % 60);
+    return `${hours}h ${minutes}m`; // Use backticks for template literals
   };
 
   useEffect(() => {
@@ -189,7 +163,6 @@ export default function Carbon(): React.JSX.Element {
           startTime,
           endTime,
           (data: AppUsageData[]) => {
-            console.log('Fetched app usage data:', data);
             const filteredData = data.filter(
               app =>
                 (app.lastVisibleTime || 0) > 0 ||
@@ -204,49 +177,7 @@ export default function Carbon(): React.JSX.Element {
       }
     };
 
-    const fetchDataIfPermitted = async () => {
-      const hasPermission = await AppUsage.checkPackagePermission();
-      if (hasPermission) {
-        setTimeout(fetchAppUsageData, 500);
-      }
-    };
-
-    fetchDataIfPermitted();
-  }, []);
-
-  useEffect(() => {
-    const fetchDataUsage = async () => {
-      try {
-        if (DataUsageModule) {
-          const hasPermission =
-            await DataUsageModule.requestUsageStatsPermission();
-          if (!hasPermission) {
-            openSettingsAlert();
-            return;
-          }
-
-          const result = await DataUsageModule.getTotalDataUsage();
-          setMobileDataUsage(result.mobileDataUsage);
-          setWifiDataUsage(result.wifiDataUsage);
-        } else {
-          console.warn('DataUsageModule is not available.');
-        }
-      } catch (error) {
-        console.error('Failed to fetch data usage:', error);
-      }
-    };
-
-    fetchDataUsage();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(state => {
-      setConnectionInfo(
-        `Type: ${state.type}, Is Connected: ${state.isConnected}`,
-      );
-    });
-
-    return () => unsubscribe();
+    fetchAppUsageData();
   }, []);
 
   return (
@@ -259,108 +190,79 @@ export default function Carbon(): React.JSX.Element {
         contentInsetAdjustmentBehavior="automatic"
         style={backgroundStyle}>
         <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <View title="App Usage Data">
-            {appUsageData.length > 0 ? (
-              [
-                'Social Media',
-                'Productivity',
-                'Entertainment',
-                'Messaging',
-                'Other',
-              ].map(category => {
-                const appsInCategory = appUsageData.filter(
-                  app =>
-                    getAppCategory(app.packageName.split('.').pop() || '') ===
-                    category,
-                );
+          style={{backgroundColor: isDarkMode ? Colors.black : Colors.white}}>
+          {appUsageData.length > 0 ? (
+            [
+              'Social Media',
+              'Productivity',
+              'Entertainment',
+              'Messaging',
+              'Other',
+            ].map(category => {
+              const appsInCategory = appUsageData.filter(
+                app => getAppCategory(app.packageName) === category,
+              );
 
-                if (appsInCategory.length === 0) return null;
+              if (appsInCategory.length === 0) return null;
 
-                // Calculate total time and carbon emissions for the category
-                const totalCategoryTime = appsInCategory.reduce(
-                  (total, app) => total + app.totalForegroundTime,
-                  0,
-                );
-                const categoryCarbonEmissions = calculateCarbonEmissions(
-                  totalCategoryTime,
-                  category,
-                );
+              const totalCategoryTime = appsInCategory.reduce(
+                (total, app) => total + app.totalForegroundTime,
+                0,
+              );
+              const categoryCarbonEmissions = calculateCarbonEmissions(
+                totalCategoryTime,
+                category,
+              );
+              const categoryDataUsage = calculateDataUsage(
+                totalCategoryTime,
+                category,
+              );
 
-                return (
-                  <View key={category}>
-                    <Text style={styles.categoryTitle}>{category}</Text>
-                    {appsInCategory.map((app, index) => {
-                      // Calculate emissions for each app
-                      const appCarbonEmissions = calculateCarbonEmissions(
-                        app.totalForegroundTime,
-                        category,
-                      );
+              return (
+                <View key={category} style={styles.dataContainer}>
+                  <Text style={styles.categoryTitle}>{category}</Text>
+                  {appsInCategory.map((app, index) => {
+                    const appCarbonEmissions = calculateCarbonEmissions(
+                      app.totalForegroundTime,
+                      category,
+                    );
+                    const appDataUsage = calculateDataUsage(
+                      app.totalForegroundTime,
+                      category,
+                    );
 
-                      return (
-                        <View key={index} style={styles.appContainer}>
-                          <Text style={styles.appName}>
-                            {app.packageName.split('.').pop()}
-                          </Text>
-                          <Text style={styles.appTime}>
-                            {formatTime(app.totalForegroundTime)}
-                          </Text>
-                          <Text style={styles.appCarbonEmissions}>
-                            CO₂: {appCarbonEmissions.toFixed(3)} kg
-                          </Text>
-                          {index < appsInCategory.length - 1 && (
-                            <View style={styles.separator} />
-                          )}
-                        </View>
-                      );
-                    })}
-                    {/* Display total time and emissions for the category */}
-                    <Text style={styles.totalCategoryTime}>
-                      Total Time: {formatTime(totalCategoryTime)}
-                    </Text>
-                    <Text style={styles.totalCategoryCarbonEmissions}>
-                      Total Carbon Emissions:{' '}
-                      {categoryCarbonEmissions.toFixed(3)} kg CO₂
-                    </Text>
-                  </View>
-                );
-              })
-            ) : (
-              <Text>
-                No app usage data with visible or foreground time available.
-              </Text>
-            )}
-          </View>
-
-          {/* <Section title="Connection Information">
+                    return (
+                      <View key={index} style={styles.appContainer}>
+                        <Text style={styles.appName}>{app.packageName}</Text>
+                        <Text style={styles.appTime}>
+                          Time: {formatTime(app.totalForegroundTime)}
+                        </Text>
+                        <Text style={styles.appDataUsage}>
+                          Data Usage: {appDataUsage.toFixed(2)} MB
+                        </Text>
+                        <Text style={styles.appCarbonEmissions}>
+                          CO₂: {appCarbonEmissions.toFixed(3)} kg
+                        </Text>
+                      </View>
+                    );
+                  })}
+                  <Text style={styles.totalCategoryTime}>
+                    Total Time: {formatTime(totalCategoryTime)}
+                  </Text>
+                  <Text style={styles.totalCategoryDataUsage}>
+                    Total Data Usage: {categoryDataUsage.toFixed(2)} MB
+                  </Text>
+                  <Text style={styles.totalCategoryCarbonEmissions}>
+                    Total CO₂ Emissions: {categoryCarbonEmissions.toFixed(3)} kg
+                  </Text>
+                </View>
+              );
+            })
+          ) : (
             <Text>
-              {connectionInfo || 'No connection information available.'}
+              No app usage data with visible or foreground time available.
             </Text>
-          </Section> */}
-          {/* <Section title="Data Usage">
-            <View style={styles.dataContainer}>
-              <Text style={styles.dataUsageLabel}>
-                Wi-Fi Data Usage (Last 24 hours):
-              </Text>
-              <Text style={styles.dataUsageValue}>
-                {wifiDataUsage !== null
-                  ? `${(wifiDataUsage / 1024 ** 2).toFixed(2)} MB`
-                  : 'Loading...'}
-              </Text>
-            </View>
-            <View style={styles.dataContainer}>
-              <Text style={styles.dataUsageLabel}>
-                Mobile Data Usage (Last 24 hours):
-              </Text>
-              <Text style={styles.dataUsageValue}>
-                {mobileDataUsage !== null
-                  ? `${(mobileDataUsage / 1024 ** 2).toFixed(2)} MB`
-                  : 'Loading...'}
-              </Text>
-            </View>
-          </Section> */}
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -368,51 +270,44 @@ export default function Carbon(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
+  dataContainer: {
     paddingHorizontal: 24,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
-  sectionTitle: {
-    fontSize: 24,
+  categoryTitle: {
+    fontSize: 20,
     fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+    marginTop: 20,
   },
   appContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light,
+    borderBottomColor: '#E0E0E0',
   },
   appName: {
     fontWeight: '500',
-    color: Colors.black,
   },
   appTime: {
     fontWeight: '400',
-    color: Colors.black,
   },
-  dataContainer: {
-    paddingHorizontal: 24,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.light,
-  },
-  dataUsageLabel: {
-    fontSize: 18,
-    fontWeight: '500',
-  },
-  dataUsageValue: {
-    fontSize: 16,
+  appDataUsage: {
     fontWeight: '400',
   },
-  separator: {
-    height: 1,
-    backgroundColor: '#E0E0E0',
-    marginVertical: 8,
+  appCarbonEmissions: {
+    fontWeight: '400',
+  },
+  totalCategoryTime: {
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  totalCategoryDataUsage: {
+    fontWeight: '600',
+  },
+  totalCategoryCarbonEmissions: {
+    fontWeight: '600',
   },
 });
