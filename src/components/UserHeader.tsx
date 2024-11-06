@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   levelValue: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#FFFFFF',
     fontFamily: 'Poppins-Medium',

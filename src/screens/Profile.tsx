@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
@@ -17,7 +17,7 @@ const levelIcon = require('../assets/images/level_bg.png');
 const coinIcon = require('../assets/images/coin.png');
 const medalIcon = require('../assets/images/medal.png');
 
-const Profile = ({navigation}) => {
+const Profile = ({ navigation }) => {
   const currentUser = auth().currentUser;
   const [displayName, setDisplayName] = useState('');
   const [displayEmail, setDisplayEmail] = useState('');
@@ -29,73 +29,69 @@ const Profile = ({navigation}) => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      try {
-        const user = auth().currentUser;
-        if (user) {
-          setDisplayName(user.displayName || 'User');
-          setDisplayEmail(user.email || 'Email');
+      if (currentUser) {
+        setDisplayName(currentUser.displayName || 'User');
+        setDisplayEmail(currentUser.email || 'Email');
 
-          // Fetch user stats from Firestore
-          const userRef = firestore()
-            .collection('UserMain')
-            .doc(user.displayName);
-          const documentSnapshot = await userRef.get();
-
+        const userRef = firestore().collection('UserMain').doc(currentUser.displayName);
+        const unsubscribe = userRef.onSnapshot(async (documentSnapshot) => {
           if (documentSnapshot.exists) {
             const userData = documentSnapshot.data();
             setStreak(userData.streak || 0);
-            setLevel(userData.level || 1);
             setCoins(userData.coins || 0);
 
-            // Fetch all users and calculate rank
-            const usersSnapshot = await firestore()
-              .collection('UserMain')
-              .get();
-            const usersData = usersSnapshot.docs.map(doc => ({
-              ...doc.data(),
-              displayName: doc.id, // Get the display name from the document ID
-            }));
+            // Calculate level based on coins (1 level per 100 coins)
+          const calculatedLevel = Math.min(Math.floor((userData.coins || 0) / 100) + 1, 99);
+          setLevel(calculatedLevel);
 
-            // Sort users by coins in descending order
-            const sortedUsers = usersData.sort((a, b) => b.coins - a.coins);
-            setLeaderboard(sortedUsers);
-
-            // Find the rank of the current user based on coins
-            const userRank =
-              sortedUsers.findIndex(u => u.displayName === user.displayName) +
-              1;
-
-            setRank(userRank > 0 ? userRank : 'N/A');
+          // Update Firestore if level has changed and is within the cap
+          if (calculatedLevel !== userData.level) {
+            await userRef.update({ level: calculatedLevel });
           }
-        }
+          }
+        });
+
+        return () => unsubscribe();
+      }
+    };
+
+    const fetchLeaderboard = async () => {
+      try {
+        const usersSnapshot = await firestore().collection('UserMain').get();
+        const usersData = usersSnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          displayName: doc.id,
+        }));
+
+        const sortedUsers = usersData.sort((a, b) => b.coins - a.coins);
+        setLeaderboard(sortedUsers);
+
+        const userRank = sortedUsers.findIndex(
+          (u) => u.displayName === currentUser.displayName
+        ) + 1;
+        setRank(userRank > 0 ? userRank : 'N/A');
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Error fetching leaderboard data:', error);
       }
     };
 
     fetchUserData();
+    fetchLeaderboard();
   }, []);
 
   const signOutClick = () => {
-    auth()
-      .signOut()
-      .then(() => console.log('User signed out!'));
+    auth().signOut().then(() => console.log('User signed out!'));
     navigation.navigate('Welcome');
   };
 
   return (
-    <ImageBackground
-      source={backgroundImage}
-      style={styles.background}
-      resizeMode="cover">
+    <ImageBackground source={backgroundImage} style={styles.background} resizeMode="cover">
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.container}>
           <Text style={styles.title}>Profile</Text>
           {/* Profile Section */}
           <View style={styles.profileSection}>
-            <View style={styles.avatarCircle}>
-              {/* <Image source={leafIcon} style={styles.avatarIcon} /> */}
-            </View>
+            <View style={styles.avatarCircle} />
             <View style={styles.userInfo}>
               <Text style={styles.userName}>{displayName}</Text>
               <Text style={styles.userEmail}>{displayEmail}</Text>
@@ -136,9 +132,7 @@ const Profile = ({navigation}) => {
               <View style={styles.statContent}>
                 <Image source={medalIcon} style={styles.statIcon} />
                 <View>
-                  <Text style={styles.statValue}>
-                    {rank ? `${rank}` : 'N/A'}
-                  </Text>
+                  <Text style={styles.statValue}>{rank ? `${rank}` : 'N/A'}</Text>
                   <Text style={styles.statLabel}>Ranking</Text>
                 </View>
               </View>
@@ -160,6 +154,7 @@ const Profile = ({navigation}) => {
 export default Profile;
 
 const styles = StyleSheet.create({
+  // Style objects remain the same as your original code.
   background: {
     flex: 1,
   },

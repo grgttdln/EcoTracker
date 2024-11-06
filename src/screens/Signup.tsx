@@ -68,8 +68,8 @@ const Signup = ({navigation}: any) => {
         .collection('UserMain')
         .doc(username) // Specify the document ID
         .set({
-          coins: '10',
-          level: '1',
+          coins: 10,
+          level: 1,
           streak: 0,
         });
 
