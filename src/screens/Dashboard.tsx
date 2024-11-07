@@ -174,6 +174,7 @@ const Dashboard = ({navigation}) => {
     checkMissedDayAndResetStreak();
   }, [currentUser]);
 
+  // CHALLENGES
   useEffect(() => {
     const fetchChallenges = async () => {
       if (currentUser) {
@@ -216,6 +217,14 @@ const Dashboard = ({navigation}) => {
 
             setChallenges(challengesDict);
 
+            const userDocRef = firestore()
+              .collection('UserMain')
+              .doc(currentUser.displayName);
+
+            await userDocRef.update({
+              challenges: firestore.FieldValue.delete(),
+            });
+
             // Save to UserMain collection with today's date
             await firestore()
               .collection('UserMain')
@@ -223,7 +232,6 @@ const Dashboard = ({navigation}) => {
               .set(
                 {
                   challenges: {
-                    ...taskData?.challenges,
                     ...challengesDict,
                   },
                   lastUpdated: today,
