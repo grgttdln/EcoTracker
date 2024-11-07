@@ -8,10 +8,13 @@ import {
   Text,
   useColorScheme,
   View,
+  ImageBackground,
   Alert,
+  Image
 } from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import AppUsage from 'react-native-app-usage';
+import UserHeader from '../components/UserHeader';
 
 interface AppUsageData {
   packageName: string;
@@ -63,6 +66,9 @@ const APP_NAME_MAPPINGS: {[key: string]: string} = {
 const getAppDisplayName = (packageName: string): string => {
   return APP_NAME_MAPPINGS[packageName] || packageName;
 };
+
+const bgImage = require('../assets/images/carbon_bg.png');
+const socmedIcon = require('../assets/images/socmedIcon.png');
 
 export default function Carbon(): React.JSX.Element {
   const getAppCategory = (appName: string): string => {
@@ -240,11 +246,30 @@ export default function Carbon(): React.JSX.Element {
 
   return (
     <SafeAreaView style={styles.container}>
+      <UserHeader />
+      
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         style={styles.scrollView}>
+
+          {/* Carbon Emission Goal */}
+          <View style={styles.mainContent}>
+          <Text>Carbon Emission Goal</Text>
+          </View>
+
+          {/* Carbon Emission Monitoring */}
+          <View style={styles.mainContent}>
+          <Text>Carbon Emission Monitoring</Text>
+          </View>
+
+          {/* Usage Breakdown */}
         <View style={styles.mainContent}>
+        <ImageBackground
+          source={bgImage} 
+          style={styles.backgroundImage}
+        >
+          <Text style={styles.titleSection}>Usage Breakdown</Text>
           {appUsageData.length > 0 ? (
             [
               'Social Media',
@@ -275,57 +300,50 @@ export default function Carbon(): React.JSX.Element {
                   category,
                 );
 
-              return (
-                <View key={category} style={styles.dataContainer}>
-                  <Text style={styles.categoryTitle}>{category}</Text>
-                  {appsInCategory.map((app, index) => {
-                    const appName =
-                      APP_NAME_MAPPINGS[app.packageName] || app.packageName;
-                    const appDataUsage = calculateDataUsage(
-                      app.totalForegroundTime,
-                      category,
-                    );
-                    const appCarbonEmissions = calculateTotalCarbonEmissions(
-                      app.totalForegroundTime,
-                      appDataUsage,
-                      category,
-                    );
+                const getIconByCategory = (category) => {
+                  switch (category) {
+                    case 'Productivity':
+                      return require('../assets/images/productivityIcon.png');
+                    case 'Social Media':
+                      return require('../assets/images/socmedIcon.png');
+                    case 'Entertainment':
+                      return require('../assets/images/entertainmentIcon.png');
+                    case 'Messaging':
+                      return require('../assets/images/messagingIcon.png');
+                    default:
+                      return require('../assets/images/otherIcon.png');
+                  }
+                };
 
-                    return (
-                      category !== 'Other' && (
-                        <View key={index} style={styles.appContainer}>
-                          <Text style={styles.appName}>{appName}</Text>
-                          <Text style={styles.appTime}>
-                            Time: {formatTime(app.totalForegroundTime)}
-                          </Text>
-                          <Text style={styles.appDataUsage}>
-                            Data Usage: {appDataUsage.toFixed(2)} MB
-                          </Text>
-                          <Text style={styles.appCarbonEmissions}>
-                            CO₂: {appCarbonEmissions.toFixed(3)} kg
-                          </Text>
-                        </View>
-                      )
-                    );
-                  })}
-                  <Text style={styles.totalCategoryTime}>
-                    Total Time: {formatTime(totalCategoryTime)}
-                  </Text>
-                  <Text style={styles.totalCategoryDataUsage}>
-                    Total Data Usage: {categoryDataUsage.toFixed(2)} MB
-                  </Text>
-                  <Text style={styles.totalCategoryCarbonEmissions}>
-                    Total CO₂ Emissions:
-                    {totalCategoryCarbonEmissions.toFixed(3)} kg
-                  </Text>
+                return (
+                  <View key={category} style={styles.dataContainer}>
+                  <Image source={getIconByCategory(category)} style={styles.picIcons} />
+                  <View>
+                    <Text style={styles.categoryTitle}>{category}</Text>
+                    <View style={styles.miniDataContainer}>
+                      <View style={styles.infoContainer}>
+                        <Text style={styles.info}>{formatTime(totalCategoryTime)}</Text>
+                        <Text style={styles.label}>Time Spent</Text>
+                      </View>
+                      <View style={styles.infoContainer}>
+                        <Text style={styles.info}>{categoryDataUsage.toFixed(2)} MB</Text>
+                        <Text style={styles.label}>Data Usage</Text>
+                      </View>
+                      <View style={styles.infoContainer}>
+                        <Text style={styles.info}>{totalCategoryCarbonEmissions.toFixed(3)} CO₂e</Text>
+                        <Text style={styles.label}>Carbon Emission</Text>
+                      </View>
+                      </View>
+                  </View>
                 </View>
-              );
+                );
             })
           ) : (
             <Text>
               No app usage data with visible or foreground time available.
             </Text>
           )}
+        </ImageBackground>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -344,22 +362,35 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   dataContainer: {
-    paddingHorizontal: 24,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    marginBottom: 100,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 26,
+    marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',    
+  },
+  miniDataContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginLeft: 8,
+  },
+  backgroundImage: {
+    flex: 1,
+    padding: 15,
+    resizeMode: 'cover',
   },
   categoryTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginTop: 20,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#203B2F', 
+    marginBottom: 10,
+    marginLeft: 8,
   },
   appContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 8,
-    borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
   appName: {
@@ -384,4 +415,34 @@ const styles = StyleSheet.create({
   totalCategoryCarbonEmissions: {
     fontWeight: '600',
   },
+  appsGroupContainer: {
+    borderWidth: 1, 
+    backgroundColor: "#EBF1E8",
+    borderColor: "#7BA065"
+  },
+  picIcons: {
+    width: 70,
+    height: 70,
+    marginRight: 12,
+  },
+  infoContainer: {
+    alignItems: 'flex-start',
+    marginRight: 10,
+  },
+  label: {
+    fontSize: 12,
+    color: '#203B2F', 
+  },
+  info: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#203B2F', 
+  },
+  titleSection: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 10,
+    marginLeft: 8,
+  }
 });
