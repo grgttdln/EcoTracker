@@ -15,7 +15,7 @@ import ChallengeCard from '../components/ChallengeCard';
 import firestore from '@react-native-firebase/firestore';
 import moment from 'moment'; // To compare dates easily
 
-const Dashboard = () => {
+const Dashboard = ({navigation}) => {
   const currentUser = auth().currentUser;
   const [challenges, setChallenges] = useState({});
   const [displayName, setDisplayName] = useState('');
@@ -42,12 +42,14 @@ const Dashboard = () => {
           if (documentSnapshot.exists) {
             const data = documentSnapshot.data();
             const updatedChallenges = data.challenges || {};
-            
+
             // Update challenges state
             setChallenges(updatedChallenges);
 
             // Count completed challenges and update progress
-            const completed = Object.values(updatedChallenges).filter(status => status === true).length;
+            const completed = Object.values(updatedChallenges).filter(
+              status => status === true,
+            ).length;
             const limitedCompleted = Math.min(completed, 5);
             setCompletedCount(limitedCompleted);
             setProgress(limitedCompleted / 5);
@@ -55,7 +57,7 @@ const Dashboard = () => {
         },
         error => {
           console.error('Error fetching challenges data: ', error);
-        }
+        },
       );
 
     return () => subscriber(); // Clean up on component unmount
@@ -181,7 +183,7 @@ const Dashboard = () => {
             .collection('UserMain')
             .doc(currentUser.displayName)
             .get();
-          
+
           const taskData = userTask.data();
           const today = new Date().toISOString().split('T')[0];
           const lastUpdated = taskData?.lastUpdated || null;
@@ -332,12 +334,13 @@ const Dashboard = () => {
                   challenge={challenge}
                   isCompleted={challenges[challenge]}
                   onComplete={handleStreakUpdate}
+                  navigation={navigation}
                 />
               ))
           ) : (
             <Text>No challenges available.</Text>
           )}
-        </ScrollView>     
+        </ScrollView>
       </ScrollView>
     </View>
   );

@@ -6,6 +6,7 @@ import WelcomePage from './src/screens/WelcomePage';
 import Login from './src/screens/Login';
 import Signup from './src/screens/Signup';
 import Dashboard from './src/screens/DashboardTabs';
+import LevelUp from './src/screens/LevelUp';
 
 const Stack = createStackNavigator();
 
@@ -21,6 +22,7 @@ function App(): React.JSX.Element {
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Signup" component={Signup} />
         <Stack.Screen name="Dashboard" component={Dashboard} />
+        <Stack.Screen name="LevelUp" component={LevelUp} />
       </Stack.Navigator>
     </NavigationContainer>
   );

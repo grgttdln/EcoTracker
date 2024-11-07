@@ -24,6 +24,7 @@ const ChallengeCard = ({
   challenge,
   isCompleted: initialIsCompleted,
   onComplete,
+  navigation,
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isCompleted, setIsCompleted] = useState(initialIsCompleted);
@@ -71,7 +72,7 @@ const ChallengeCard = ({
     setModalVisible(false);
     if (confirmed) {
       console.log('Task completed!');
-      setIsCompleted(true); // Mark the challenge as completed
+      setIsCompleted(true);
       if (onComplete) {
         onComplete();
       }
@@ -83,23 +84,32 @@ const ChallengeCard = ({
           .set(
             {
               challenges: {
-                [challenge]: true, // Set the challenge as completed
+                [challenge]: true,
               },
             },
             {merge: true},
           );
 
-        // Safely update coins using transaction
         if (currCoins !== null) {
           const userRef = firestore()
             .collection('UserMain')
             .doc(user.displayName);
+
           await firestore().runTransaction(async transaction => {
             const userDoc = await transaction.get(userRef);
             const currentCoins = userDoc.data()?.coins || 0;
-            transaction.update(userRef, {
-              coins: currentCoins + 10, // Add 10 coins to current total
-            });
+            const newCoins = currentCoins + 10;
+
+            transaction.update(userRef, {coins: newCoins});
+
+            const levelUpThreshold = 100;
+            const currentLevel =
+              Math.floor(currentCoins / levelUpThreshold) + 1;
+            const newLevel = Math.floor(newCoins / levelUpThreshold) + 1;
+
+            if (newLevel > currentLevel) {
+              navigation.navigate('LevelUp', {level: newLevel});
+            }
           });
         }
       } catch (error) {
