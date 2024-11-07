@@ -10,11 +10,13 @@ import {
   View,
   ImageBackground,
   Alert,
+  Dimensions,
   Image
 } from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import AppUsage from 'react-native-app-usage';
 import UserHeader from '../components/UserHeader';
+import { BarChart, ProgressChart } from 'react-native-chart-kit';
 
 interface AppUsageData {
   packageName: string;
@@ -217,6 +219,7 @@ export default function Carbon(): React.JSX.Element {
     checkAndRequestPermission();
   }, []);
 
+
   useEffect(() => {
     const fetchAppUsageData = async () => {
       try {
@@ -261,6 +264,53 @@ export default function Carbon(): React.JSX.Element {
           {/* Carbon Emission Monitoring */}
           <View style={styles.mainContent}>
           <Text>Carbon Emission Monitoring</Text>
+         
+
+         <BarChart
+  data={{
+    labels: ["Social Media", "Productivity", "Entertainment", "Messaging", "Other"],
+    datasets: [
+      {
+        data: [20, 45, 28, 80, 99]
+      }
+    ]
+  }}
+  width={Dimensions.get('window').width * 0.9}
+  height={220}
+  yAxisLabel=""
+  chartConfig={{
+    backgroundColor: '#FFFFFF',
+    backgroundGradientFrom: '#FFFFFF',
+    backgroundGradientTo: '#FFFFFF',
+    decimalPlaces: 2,
+    color: (opacity = 1, index) => {
+      // Define a different color for each bar
+      const barColors = [
+        'rgba(255, 99, 132, 1)',   // Social Media
+        'rgba(54, 162, 235, 1)',   // Productivity
+        'rgba(255, 206, 86, 1)',   // Entertainment
+        'rgba(75, 192, 192, 1)',   // Messaging
+        'rgba(153, 102, 255, 1)',  // Other
+      ];
+      return barColors[index % 5];
+    },
+    labelColor: (opacity = 1) => `rgba(35, 117, 86, ${opacity})`,
+    barPercentage: 0.7,
+    propsForBackgroundLines: {
+      stroke: 'transparent',
+    },
+    propsForLabels: {
+      fontSize: 10,
+    },
+  }}
+  style={{
+    borderRadius: 16,
+    marginVertical: 8,
+  }}
+  fromZero
+/>
+
+
           </View>
 
           {/* Usage Breakdown */}
