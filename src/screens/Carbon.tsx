@@ -21,10 +21,11 @@ interface AppUsageData {
   totalVisibleTime: number;
 }
 
-const APP_NAME_MAPPINGS: { [key: string]: string } = {
+const APP_NAME_MAPPINGS: {[key: string]: string} = {
   'com.facebook.katana': 'Facebook',
-  'com.facebook.orca': 'Facebook Messenger',
+  'com.facebook.orca': 'Messenger',
   'com.instagram.android': 'Instagram',
+  'com.ss.android.ugc.trill': 'TikTok',
   'com.ecotrack': 'EcoTrack',
   'com.twitter.android': 'Twitter',
   'com.snapchat.android': 'Snapchat',
@@ -38,6 +39,9 @@ const APP_NAME_MAPPINGS: { [key: string]: string } = {
   'com.google.android.apps.sheets': 'Google Sheets',
   'com.google.android.apps.drive': 'Google Drive',
   'com.microsoft.teams': 'Microsoft Teams',
+  'com.microsoft.office.excel': 'Microsoft Excel',
+  'com.microsoft.office.word': 'Microsoft Word',
+  'com.microsoft.office.powerpoint': 'Microsoft PowerPoint',
   'com.netflix.mediaclient': 'Netflix',
   'com.spotify.music': 'Spotify',
   'com.amazon.avod.thirdpartyclient': 'Amazon Prime Video',
@@ -94,6 +98,7 @@ export default function Carbon(): React.JSX.Element {
         'slack',
         'teams',
         'ecotrack',
+        'microsoft',
       ])
     ) {
       return 'Productivity';
@@ -145,12 +150,31 @@ export default function Carbon(): React.JSX.Element {
     Other: 60,
   };
 
-  const calculateCarbonEmissions = (
+  const DATA_USAGE_EMISSION_RATES = {
+    'Social Media': 0.2,
+    Productivity: 0.2,
+    Entertainment: 0.2,
+    Messaging: 0.2,
+    Other: 0.2,
+  };
+
+  const calculateTotalCarbonEmissions = (
     timeInMilliseconds: number,
+    dataUsageInMB: number,
     category: string,
   ) => {
     const hours = timeInMilliseconds / (1000 * 60 * 60);
-    return hours * (EMISSION_RATES[category] || 0);
+
+    // Calculate carbon emissions based on time spent
+    const timeBasedEmissions = hours * (EMISSION_RATES[category] || 0);
+
+    // Calculate carbon emissions based on data usage
+    const dataUsageInGB = dataUsageInMB / 1024; // Convert MB to GB
+    const dataBasedEmissions =
+      dataUsageInGB * (DATA_USAGE_EMISSION_RATES[category] || 0);
+
+    // Add both emissions to get total carbon emissions for this category
+    return timeBasedEmissions + dataBasedEmissions;
   };
 
   const calculateDataUsage = (timeInMilliseconds: number, category: string) => {
@@ -217,7 +241,9 @@ export default function Carbon(): React.JSX.Element {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      <ScrollView contentInsetAdjustmentBehavior="automatic" style={styles.scrollView}>
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        style={styles.scrollView}>
         <View style={styles.mainContent}>
           {appUsageData.length > 0 ? (
             [
@@ -237,42 +263,49 @@ export default function Carbon(): React.JSX.Element {
                 (total, app) => total + app.totalForegroundTime,
                 0,
               );
-              const categoryCarbonEmissions = calculateCarbonEmissions(
-                totalCategoryTime,
-                category,
-              );
               const categoryDataUsage = calculateDataUsage(
                 totalCategoryTime,
                 category,
               );
 
+              const totalCategoryCarbonEmissions =
+                calculateTotalCarbonEmissions(
+                  totalCategoryTime,
+                  categoryDataUsage,
+                  category,
+                );
+
               return (
                 <View key={category} style={styles.dataContainer}>
                   <Text style={styles.categoryTitle}>{category}</Text>
                   {appsInCategory.map((app, index) => {
-                    const appName = APP_NAME_MAPPINGS[app.packageName] || app.packageName;
-                    const appCarbonEmissions = calculateCarbonEmissions(
-                      app.totalForegroundTime,
-                      category,
-                    );
+                    const appName =
+                      APP_NAME_MAPPINGS[app.packageName] || app.packageName;
                     const appDataUsage = calculateDataUsage(
                       app.totalForegroundTime,
                       category,
                     );
+                    const appCarbonEmissions = calculateTotalCarbonEmissions(
+                      app.totalForegroundTime,
+                      appDataUsage,
+                      category,
+                    );
 
                     return (
-                      <View key={index} style={styles.appContainer}>
-                        <Text style={styles.appName}>{appName}</Text>
-                        <Text style={styles.appTime}>
-                          Time: {formatTime(app.totalForegroundTime)}
-                        </Text>
-                        <Text style={styles.appDataUsage}>
-                          Data Usage: {appDataUsage.toFixed(2)} MB
-                        </Text>
-                        <Text style={styles.appCarbonEmissions}>
-                          CO₂: {appCarbonEmissions.toFixed(3)} kg
-                        </Text>
-                      </View>
+                      category !== 'Other' && (
+                        <View key={index} style={styles.appContainer}>
+                          <Text style={styles.appName}>{appName}</Text>
+                          <Text style={styles.appTime}>
+                            Time: {formatTime(app.totalForegroundTime)}
+                          </Text>
+                          <Text style={styles.appDataUsage}>
+                            Data Usage: {appDataUsage.toFixed(2)} MB
+                          </Text>
+                          <Text style={styles.appCarbonEmissions}>
+                            CO₂: {appCarbonEmissions.toFixed(3)} kg
+                          </Text>
+                        </View>
+                      )
                     );
                   })}
                   <Text style={styles.totalCategoryTime}>
@@ -282,20 +315,22 @@ export default function Carbon(): React.JSX.Element {
                     Total Data Usage: {categoryDataUsage.toFixed(2)} MB
                   </Text>
                   <Text style={styles.totalCategoryCarbonEmissions}>
-                    Total CO₂ Emissions: {categoryCarbonEmissions.toFixed(3)} kg
+                    Total CO₂ Emissions:
+                    {totalCategoryCarbonEmissions.toFixed(3)} kg
                   </Text>
                 </View>
               );
             })
           ) : (
-            <Text>No app usage data with visible or foreground time available.</Text>
+            <Text>
+              No app usage data with visible or foreground time available.
+            </Text>
           )}
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -313,6 +348,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
+    marginBottom: 100,
   },
   categoryTitle: {
     fontSize: 20,
