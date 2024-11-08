@@ -11,12 +11,12 @@ import {
   ImageBackground,
   Alert,
   Dimensions,
-  Image
+  Image,
 } from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import AppUsage from 'react-native-app-usage';
 import UserHeader from '../components/UserHeader';
-import { BarChart, ProgressChart } from 'react-native-chart-kit';
+import {BarChart, ProgressChart} from 'react-native-chart-kit';
 
 interface AppUsageData {
   packageName: string;
@@ -198,6 +198,14 @@ export default function Carbon(): React.JSX.Element {
     return `${hours}h ${minutes}m`; // Use backticks for template literals
   };
 
+  const [emissionData, setEmissionData] = useState({
+    'Social Media': 0,
+    Productivity: 0,
+    Entertainment: 0,
+    Messaging: 0,
+    Other: 0,
+  });
+
   useEffect(() => {
     const checkAndRequestPermission = async () => {
       const hasPermission = await AppUsage.checkPackagePermission();
@@ -219,7 +227,6 @@ export default function Carbon(): React.JSX.Element {
     checkAndRequestPermission();
   }, []);
 
-
   useEffect(() => {
     const fetchAppUsageData = async () => {
       try {
@@ -236,7 +243,28 @@ export default function Carbon(): React.JSX.Element {
                 (app.totalForegroundTime || 0) > 0 ||
                 (app.totalVisibleTime || 0) > 0,
             );
+            const categoryEmissions = {
+              'Social Media': 0,
+              Productivity: 0,
+              Entertainment: 0,
+              Messaging: 0,
+              Other: 0,
+            };
+
+            filteredData.forEach(app => {
+              const category = getAppCategory(app.packageName);
+              const totalTime = app.totalForegroundTime;
+              const dataUsage = calculateDataUsage(totalTime, category);
+              const carbonEmissions = calculateTotalCarbonEmissions(
+                totalTime,
+                dataUsage,
+                category,
+              );
+              categoryEmissions[category] += carbonEmissions;
+            });
+
             setAppUsageData(filteredData);
+            setEmissionData(categoryEmissions);
           },
         );
       } catch (error) {
@@ -250,75 +278,70 @@ export default function Carbon(): React.JSX.Element {
   return (
     <SafeAreaView style={styles.container}>
       <UserHeader />
-      
+
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         style={styles.scrollView}>
-
-          {/* Carbon Emission Goal */}
-          <View style={styles.mainContent}>
-          <Text>Carbon Emission Goal</Text>
-          </View>
-
-          {/* Carbon Emission Monitoring */}
-          <View style={styles.mainContent}>
-          <Text>Carbon Emission Monitoring</Text>
-         
-
-         <BarChart
-  data={{
-    labels: ["Social Media", "Productivity", "Entertainment", "Messaging", "Other"],
-    datasets: [
-      {
-        data: [20, 45, 28, 80, 99]
-      }
-    ]
-  }}
-  width={Dimensions.get('window').width * 0.9}
-  height={220}
-  yAxisLabel=""
-  chartConfig={{
-    backgroundColor: '#FFFFFF',
-    backgroundGradientFrom: '#FFFFFF',
-    backgroundGradientTo: '#FFFFFF',
-    decimalPlaces: 2,
-    color: (opacity = 1, index) => {
-      // Define a different color for each bar
-      const barColors = [
-        'rgba(255, 99, 132, 1)',   // Social Media
-        'rgba(54, 162, 235, 1)',   // Productivity
-        'rgba(255, 206, 86, 1)',   // Entertainment
-        'rgba(75, 192, 192, 1)',   // Messaging
-        'rgba(153, 102, 255, 1)',  // Other
-      ];
-      return barColors[index % 5];
-    },
-    labelColor: (opacity = 1) => `rgba(35, 117, 86, ${opacity})`,
-    barPercentage: 0.7,
-    propsForBackgroundLines: {
-      stroke: 'transparent',
-    },
-    propsForLabels: {
-      fontSize: 10,
-    },
-  }}
-  style={{
-    borderRadius: 16,
-    marginVertical: 8,
-  }}
-  fromZero
-/>
-
-
-          </View>
-
-          {/* Usage Breakdown */}
+        {/* Carbon Emission Goal */}
         <View style={styles.mainContent}>
-        <ImageBackground
-          source={bgImage} 
-          style={styles.backgroundImage}
-        >
+          <Text style={styles.titleSection}>Carbon Emission Goal</Text>
+        </View>
+
+        {/* Carbon Emission Monitoring */}
+        <View style={styles.mainContent}>
+          <Text style={styles.titleSection}>Carbon Emission Monitoring</Text>
+
+          <View style={styles.chartContainer}>
+            <BarChart
+              data={{
+                labels: [
+                  'Social Media',
+                  'Productivity',
+                  'Entertainment',
+                  'Messaging',
+                  'Other',
+                ],
+                datasets: [
+                  {
+                    data: [
+                      emissionData['Social Media'],
+                      emissionData['Productivity'],
+                      emissionData['Entertainment'],
+                      emissionData['Messaging'],
+                      emissionData['Other'],
+                    ],
+                  },
+                ],
+              }}
+              width={Dimensions.get('window').width * 0.9}
+              height={240}
+              yAxisLabel=""
+              withInnerLines={false}
+              chartConfig={{
+                backgroundColor: '#FAF9F6',
+                backgroundGradientFrom: '#FAF9F6',
+                backgroundGradientTo: '#FAF9F6',
+                decimalPlaces: 2,
+                color: () => `#056B4B`,
+                labelColor: () => `rgba(0, 0, 0, 1)`,
+                barPercentage: 2,
+
+                propsForLabels: {
+                  fontSize: 14,
+                  fontFamily: 'Poppins-medium',
+                },
+              }}
+              style={styles.chartStyle}
+              fromZero
+              showBarTops={false}
+            />
+          </View>
+        </View>
+
+        {/* Usage Breakdown */}
+        <View style={styles.mainContent}>
+          {/* <ImageBackground source={bgImage} style={styles.backgroundImage}> */}
           <Text style={styles.titleSection}>Usage Breakdown</Text>
           {appUsageData.length > 0 ? (
             [
@@ -350,50 +373,59 @@ export default function Carbon(): React.JSX.Element {
                   category,
                 );
 
-                const getIconByCategory = (category) => {
-                  switch (category) {
-                    case 'Productivity':
-                      return require('../assets/images/productivityIcon.png');
-                    case 'Social Media':
-                      return require('../assets/images/socmedIcon.png');
-                    case 'Entertainment':
-                      return require('../assets/images/entertainmentIcon.png');
-                    case 'Messaging':
-                      return require('../assets/images/messagingIcon.png');
-                    default:
-                      return require('../assets/images/otherIcon.png');
-                  }
-                };
+              const getIconByCategory = category => {
+                switch (category) {
+                  case 'Productivity':
+                    return require('../assets/images/productivityIcon.png');
+                  case 'Social Media':
+                    return require('../assets/images/socmedIcon.png');
+                  case 'Entertainment':
+                    return require('../assets/images/entertainmentIcon.png');
+                  case 'Messaging':
+                    return require('../assets/images/messagingIcon.png');
+                  default:
+                    return require('../assets/images/otherIcon.png');
+                }
+              };
 
-                return (
-                  <View key={category} style={styles.dataContainer}>
-                  <Image source={getIconByCategory(category)} style={styles.picIcons} />
+              return (
+                <View key={category} style={styles.dataContainer}>
+                  <Image
+                    source={getIconByCategory(category)}
+                    style={styles.picIcons}
+                  />
                   <View>
                     <Text style={styles.categoryTitle}>{category}</Text>
                     <View style={styles.miniDataContainer}>
                       <View style={styles.infoContainer}>
-                        <Text style={styles.info}>{formatTime(totalCategoryTime)}</Text>
+                        <Text style={styles.info}>
+                          {formatTime(totalCategoryTime)}
+                        </Text>
                         <Text style={styles.label}>Time Spent</Text>
                       </View>
                       <View style={styles.infoContainer}>
-                        <Text style={styles.info}>{categoryDataUsage.toFixed(2)} MB</Text>
+                        <Text style={styles.info}>
+                          {categoryDataUsage.toFixed(2)} MB
+                        </Text>
                         <Text style={styles.label}>Data Usage</Text>
                       </View>
                       <View style={styles.infoContainer}>
-                        <Text style={styles.info}>{totalCategoryCarbonEmissions.toFixed(3)} CO₂e</Text>
+                        <Text style={styles.info}>
+                          {totalCategoryCarbonEmissions.toFixed(3)} kg CO₂e
+                        </Text>
                         <Text style={styles.label}>Carbon Emission</Text>
                       </View>
-                      </View>
+                    </View>
                   </View>
                 </View>
-                );
+              );
             })
           ) : (
             <Text>
               No app usage data with visible or foreground time available.
             </Text>
           )}
-        </ImageBackground>
+          {/* </ImageBackground> */}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -407,18 +439,20 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     backgroundColor: '#ffffff',
+    padding: 20,
+    marginBottom: 120,
   },
   mainContent: {
     backgroundColor: '#ffffff',
   },
   dataContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FCF6',
     borderRadius: 20,
     padding: 26,
     marginBottom: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',    
+    justifyContent: 'space-between',
   },
   miniDataContainer: {
     flexDirection: 'row',
@@ -433,7 +467,7 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#203B2F', 
+    color: '#203B2F',
     marginBottom: 10,
     marginLeft: 8,
   },
@@ -466,13 +500,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   appsGroupContainer: {
-    borderWidth: 1, 
-    backgroundColor: "#EBF1E8",
-    borderColor: "#7BA065"
+    borderWidth: 1,
+    backgroundColor: '#EBF1E8',
+    borderColor: '#7BA065',
   },
   picIcons: {
-    width: 70,
-    height: 70,
+    width: 120,
+    height: 120,
     marginRight: 12,
   },
   infoContainer: {
@@ -481,18 +515,36 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    color: '#203B2F', 
+    color: '#203B2F',
   },
   info: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#203B2F', 
+    color: '#203B2F',
   },
   titleSection: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#000000',
     marginBottom: 10,
     marginLeft: 8,
-  }
+  },
+  chartContainer: {
+    backgroundColor: '#F8FCF6',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: 20,
+  },
+  chartStyle: {
+    backgroundColor: '#F8FCF6',
+    borderRadius: 16,
+    marginVertical: 8,
+  },
 });
