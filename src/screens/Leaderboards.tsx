@@ -154,26 +154,29 @@ const renderPodium = (item, index) => {
           keyExtractor={item => item.id}
           renderItem={renderItem}
         />
-        <Modal visible={isModalVisible} transparent animationType="slide">
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>
-                Congratulations, {displayName}!
-              </Text>
-              <Text style={styles.modalText}>
-                You are one of the top sustainable people this week!
-              </Text>
-             <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.dlButton} onPress={downloadCertificate}>
-                <Text style={styles.dlButtonText}>Download Certificate</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
-                <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+<Modal visible={isModalVisible} transparent animationType="slide">
+  <View style={styles.modalContainer}>
+    <View style={styles.modalContent}>
+      {/* X button for closing the modal */}
+      <TouchableOpacity style={styles.closeIcon} onPress={closeModal}>
+        <Text style={styles.closeIconText}>✕</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.modalTitle}>
+        Congratulations, {displayName}!
+      </Text>
+      <Text style={styles.modalText}>
+        You are one of the top sustainable people this week!
+      </Text>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.dlButton} onPress={downloadCertificate}>
+          <Text style={styles.dlButtonText}>Download Certificate</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
+
       </View>
     </>
   );
@@ -323,8 +326,8 @@ const styles = StyleSheet.create({
      padding: 20,
      borderRadius: 10,
      alignItems: 'center',
-     width: 300,
-     height: 300,
+     width: 320,
+     height: 280,
      justifyContent: 'space-evenly',
    },
      modalTitle: {
@@ -361,22 +364,18 @@ const styles = StyleSheet.create({
      fontSize: 17,
      textAlign: 'center', // Ensure text is centered within the button
    },
-   closeButton: {
-     backgroundColor: 'white',
-     borderWidth: 1,
-     borderColor: '#689F38',
-     borderRadius: 30,
-     paddingVertical: 12,
-     paddingHorizontal: 50,
-     width: '80%', // Consistent width with download button
-     alignItems: 'center', // Center text inside the button
-   },
-   closeButtonText: {
-     color: '#689F38',
-     fontFamily: 'Poppins-SemiBold',
-     fontSize: 17,
-     textAlign: 'center', // Center text within the button
-   },
+closeIcon: {
+  position: 'absolute',
+  top: 2,
+  right: 10,
+  padding: 10,
+},
+closeIconText: {
+  fontSize: 20,
+  fontWeight: 'bold',
+  color: '#334E2A',
+},
+
   redDot: {
     position: 'absolute',
     top: 10,
