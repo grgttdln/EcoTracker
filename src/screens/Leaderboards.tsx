@@ -4,43 +4,62 @@ import {
   View,
   FlatList,
   Image,
-  ScrollView,
+  TouchableOpacity,
+  Modal,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import UserHeader from '../components/UserHeader';
+import generateCertificate from '../components/generateCertificate';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
-const crownIcon = require('../assets/images/crown.png') ;
+const crownIcon = require('../assets/images/crown.png');
 const level = require('../assets/images/level_bg.png');
 const medalIcon = require('../assets/images/medal_podium.png');
 
 const Leaderboards = () => {
   const [leaderboard, setLeaderboard] = useState([]);
   const currentUser = auth().currentUser;
+  const [displayName, setDisplayName] = useState('');
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [hasClicked, setHasClicked] = useState(false);
+  const [currentUserRank, setCurrentUserRank] = useState(null);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
-      try {
-        const usersSnapshot = await firestore().collection('UserMain').get();
-        const usersData = usersSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+      if (currentUser) {
+        setDisplayName(currentUser.displayName || 'User');
+        try {
+          const usersSnapshot = await firestore().collection('UserMain').get();
+          const usersData = usersSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          const sortedData = usersData.sort((a, b) => b.coins - a.coins);
+          setLeaderboard(sortedData);
 
-        // Sort users by coins in descending order
-        const sortedData = usersData.sort((a, b) => b.coins - a.coins);
-        setLeaderboard(sortedData);
-      } catch (error) {
-        console.error('Error fetching leaderboard data: ', error);
+          const userRank = sortedData.findIndex(user => user.id === currentUser.displayName);
+          setCurrentUserRank(userRank < 3 ? userRank : null);
+        } catch (error) {
+          console.error('Error fetching leaderboard data: ', error);
+        }
       }
     };
 
     fetchLeaderboard();
-  }, []);
+  }, [currentUser]);
 
-  const renderPodium = (item, index) => {
-    const positions = [
+  const handlePodiumPress = (rank) => {
+    if (currentUserRank === rank && !hasClicked) {
+      setModalVisible(true);
+      setHasClicked(true);
+    }
+  };
+
+  const closeModal = () => setModalVisible(false);
+
+const renderPodium = (item, index) => {
+    const podiumStyles = [
       {
         backgroundColor: '#FFC453',
         height: 210,
@@ -66,29 +85,35 @@ const Leaderboards = () => {
       },
     ];
 
-    return (
-      <View style={[styles.podiumContainer, positions[index]]}>
-        {index === 0 && <Image source={crownIcon} style={styles.crownImage} />}
-        <Image
-          source={{uri: placeholderAvatar(item.id)}}
-          style={styles.podiumAvatar}
-        />
-        <View style={styles.levelIconContainer}>
-          <Image source={level} style={styles.levelIconPodium} />
-          <Text style={styles.levelText}>{item.level}</Text>
-        </View>
+  const isCurrentUser = item.id === currentUser.displayName;
+  const isTopUser = currentUserRank === index;
 
-        <Text style={styles.podiumName}>{item.id}</Text>
-        <View style={styles.coinsBox}>
-          <Image source={medalIcon} style={styles.medalIconPodium} />
-          <Text style={styles.podiumCoins}>{item.coins}</Text>
-        </View>
+  return (
+    <TouchableOpacity
+      style={[styles.podiumContainer, podiumStyles[index]]}
+      onPress={() => handlePodiumPress(index)}
+      activeOpacity={isTopUser ? 0.7 : 1}
+    >
+      {index === 0 && <Image source={crownIcon} style={styles.crownImage} />}
+      <Image source={{ uri: placeholderAvatar(item.id) }} style={styles.podiumAvatar} />
+      <View style={styles.levelIconContainer}>
+        <Image source={level} style={styles.levelIconPodium} />
+        <Text style={styles.levelText}>{item.level}</Text>
       </View>
-    );
-  };
+      <Text style={styles.podiumName}>{item.id}</Text>
+      <View style={styles.coinsBox}>
+        <Image source={medalIcon} style={styles.medalIconPodium} />
+        <Text style={styles.podiumCoins}>{item.coins}</Text>
+      </View>
+      {isTopUser && !hasClicked && <View style={styles.redDot} />}
+    </TouchableOpacity>
+  );
+};
+
+
 
   const renderItem = ({item, index}) => {
-    const isLastItem = index === leaderboard.length - 1 - 3; // Check if it's the last item
+    const isLastItem = index === leaderboard.length - 1 - 3;
 
     return (
       <View style={[styles.userContainer, isLastItem && styles.lastItem]}>
@@ -112,25 +137,43 @@ const Leaderboards = () => {
       name,
     )}&background=619E7B&color=fff&size=60`;
 
+  const downloadCertificate = () => {
+    generateCertificate(displayName);
+  };
+
   return (
     <>
       <UserHeader />
       <View style={styles.container}>
         <Text style={styles.headerText}>Weekly Leaderboards</Text>
-
-        {/* Podium for Top 3 Users */}
         <View style={styles.podiumWrapper}>
-          {leaderboard
-            .slice(0, 3)
-            .map((item, index) => renderPodium(item, index))}
+          {leaderboard.slice(0, 3).map((item, index) => renderPodium(item, index))}
         </View>
-
-        {/* Display Remaining Users */}
         <FlatList
           data={leaderboard.slice(3)}
           keyExtractor={item => item.id}
           renderItem={renderItem}
         />
+        <Modal visible={isModalVisible} transparent animationType="slide">
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>
+                Congratulations, {displayName}!
+              </Text>
+              <Text style={styles.modalText}>
+                You are one of the top sustainable people this week!
+              </Text>
+             <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.dlButton} onPress={downloadCertificate}>
+                <Text style={styles.dlButtonText}>Download Certificate</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </>
   );
@@ -269,7 +312,81 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginTop: 3,
   },
-  lastItem: {
-    marginBottom: 100, // Adjust the margin as needed
+   modalContainer: {
+     flex: 1,
+     justifyContent: 'center',
+     alignItems: 'center',
+     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+   },
+   modalContent: {
+     backgroundColor: '#fff',
+     padding: 20,
+     borderRadius: 10,
+     alignItems: 'center',
+     width: 300,
+     height: 300,
+     justifyContent: 'space-evenly',
+   },
+     modalTitle: {
+       fontSize: 20,
+       fontFamily: 'Poppins-SemiBold',
+       color: '#334E2A',
+       marginBottom: 5,
+     },
+   modalText: {
+     fontSize: 18,
+     fontFamily: 'Poppins-Medium',
+     marginBottom: 20,
+     textAlign: 'center',
+   },
+   buttonContainer: {
+     flexDirection: 'column',
+     justifyContent: 'center',  // Center the buttons vertically
+     alignItems: 'center', // Center buttons horizontally
+     width: '100%',  // Ensure buttons take up full width of the modal
+     marginTop: 10, // Provide spacing from modal text
+   },
+   dlButton: {
+     backgroundColor: '#689F38',
+     borderRadius: 30,
+     paddingVertical: 5,
+     paddingHorizontal: 30,
+     marginBottom: 10, // Provide spacing between buttons
+     width: '80%', // Limit button width
+     alignItems: 'center', // Center text inside the button
+   },
+   dlButtonText: {
+     color: 'white',
+     fontFamily: 'Poppins-SemiBold',
+     fontSize: 17,
+     textAlign: 'center', // Ensure text is centered within the button
+   },
+   closeButton: {
+     backgroundColor: 'white',
+     borderWidth: 1,
+     borderColor: '#689F38',
+     borderRadius: 30,
+     paddingVertical: 12,
+     paddingHorizontal: 50,
+     width: '80%', // Consistent width with download button
+     alignItems: 'center', // Center text inside the button
+   },
+   closeButtonText: {
+     color: '#689F38',
+     fontFamily: 'Poppins-SemiBold',
+     fontSize: 17,
+     textAlign: 'center', // Center text within the button
+   },
+  redDot: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF3B30',
   },
+    lastItem: {
+      marginBottom: 100,
+    },
 });
