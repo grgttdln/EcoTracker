@@ -62,14 +62,14 @@ const renderPodium = (item, index) => {
     const podiumStyles = [
       {
         backgroundColor: '#FFC453',
-        height: 210,
+        height: 220,
         top: 20,
         zIndex: 3,
         position: 'absolute',
       },
       {
         backgroundColor: '#D6D6D6',
-        height: 190,
+        height: 200,
         top: 40,
         zIndex: 2,
         position: 'absolute',
@@ -77,7 +77,7 @@ const renderPodium = (item, index) => {
       },
       {
         backgroundColor: '#E69B4B',
-        height: 170,
+        height: 180,
         top: 60,
         zIndex: 1,
         position: 'absolute',
@@ -220,8 +220,8 @@ const styles = StyleSheet.create({
     top: 0,
   },
   podiumAvatar: {
-    width: 50,
-    height: 50,
+    width: 45,
+    height: 45,
     borderRadius: 25,
     marginBottom: 10,
   },
@@ -237,7 +237,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#FEA800',
     textAlign: 'center',
-    marginBottom: 4,
+    lineHeight: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    display: 'flex',
+    marginVertical: 2,
     fontFamily: 'Poppins-Medium',
   },
   userContainer: {
@@ -292,6 +296,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    display: 'flex',
     marginTop: 4,
   },
   medalIconPodium: {

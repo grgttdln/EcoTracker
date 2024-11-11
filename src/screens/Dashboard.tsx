@@ -295,7 +295,9 @@ const Dashboard = ({navigation}) => {
             </View>
           </View>
 
-          <View style={styles.annualFootprintCard}>
+
+          {/* CHART DISPLAY DASHBOARD */}
+          {/* <View style={styles.annualFootprintCard}>
             <View style={styles.annualFootprintTextContainer}>
               <Text style={styles.annualFootprintText}>
                 Your Annual Footprint
@@ -325,7 +327,7 @@ const Dashboard = ({navigation}) => {
               hideLegend={true}
               style={styles.chartStyle}
             />
-          </View>
+          </View> */}
           <Text style={styles.challengesLabel}>Today's Challenges</Text>
         </View>
 

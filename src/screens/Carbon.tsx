@@ -285,10 +285,10 @@ export default function Carbon(): React.JSX.Element {
         style={styles.scrollView}>
         {/* Carbon Emission Goal */}
         <View style={styles.mainContent}>
-          <Text style={styles.titleSection}>Carbon Emission Goal</Text>
+          {/* <Text style={styles.titleSection}>Carbon Emission Goal</Text> */}
         </View>
 
-        {/* Carbon Emission Monitoring */}
+       {/* Carbon Emission Monitoring */}
         <View style={styles.mainContent}>
           <Text style={styles.titleSection}>Carbon Emission Monitoring</Text>
 
@@ -314,22 +314,24 @@ export default function Carbon(): React.JSX.Element {
                   },
                 ],
               }}
-              width={Dimensions.get('window').width * 0.9}
+              width={Dimensions.get('window').width * 0.9} // Adjust width to fit within screen bounds
               height={240}
               yAxisLabel=""
               withInnerLines={false}
               chartConfig={{
-                backgroundColor: '#FAF9F6',
-                backgroundGradientFrom: '#FAF9F6',
-                backgroundGradientTo: '#FAF9F6',
+                backgroundColor: '#F8FCF6',
+                backgroundGradientFrom: '#F8FCF6',
+                backgroundGradientTo: '#F8FCF6',
                 decimalPlaces: 2,
-                color: () => `#056B4B`,
-                labelColor: () => `rgba(0, 0, 0, 1)`,
-                barPercentage: 2,
-
+                color: () => `#0E3327`,
+                labelColor: () => `rgba(6, 69, 49, 1)`,
+                barPercentage: 0.4, // Further reduce for better spacing
                 propsForLabels: {
-                  fontSize: 14,
+                  fontSize: 10, 
                   fontFamily: 'Poppins-medium',
+                },
+                propsForHorizontalLabels: {
+                  dy: 10, 
                 },
               }}
               style={styles.chartStyle}
@@ -339,10 +341,12 @@ export default function Carbon(): React.JSX.Element {
           </View>
         </View>
 
+
+
         {/* Usage Breakdown */}
         <View style={styles.mainContent}>
           {/* <ImageBackground source={bgImage} style={styles.backgroundImage}> */}
-          <Text style={styles.titleSection}>Usage Breakdown</Text>
+          {/* <Text style={styles.titleSection}>Usage Breakdown</Text> */}
           {appUsageData.length > 0 ? (
             [
               'Social Media',
@@ -411,7 +415,7 @@ export default function Carbon(): React.JSX.Element {
                       </View>
                       <View style={styles.infoContainer}>
                         <Text style={styles.info}>
-                          {totalCategoryCarbonEmissions.toFixed(3)} kg CO₂e
+                          {totalCategoryCarbonEmissions.toFixed(2)} kg CO₂e
                         </Text>
                         <Text style={styles.label}>Carbon Emission</Text>
                       </View>
@@ -440,7 +444,7 @@ const styles = StyleSheet.create({
   scrollView: {
     backgroundColor: '#ffffff',
     padding: 20,
-    marginBottom: 120,
+    // marginBottom: 120,
   },
   mainContent: {
     backgroundColor: '#ffffff',
@@ -453,6 +457,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    borderColor: '#7BA065',
+    borderWidth: 1,
   },
   miniDataContainer: {
     flexDirection: 'row',
@@ -465,8 +471,8 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   categoryTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '800',
     color: '#203B2F',
     marginBottom: 10,
     marginLeft: 8,
@@ -505,9 +511,9 @@ const styles = StyleSheet.create({
     borderColor: '#7BA065',
   },
   picIcons: {
-    width: 120,
-    height: 120,
-    marginRight: 12,
+    width: 80,
+    height: 80,
+    marginRight: 0,
   },
   infoContainer: {
     alignItems: 'flex-start',
@@ -523,27 +529,38 @@ const styles = StyleSheet.create({
     color: '#203B2F',
   },
   titleSection: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#000000',
-    marginBottom: 10,
-    marginLeft: 8,
+    color: '#056B4B',
+    // marginBottom: 10,
+    // marginLeft: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    padding: 10,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
   chartContainer: {
     backgroundColor: '#F8FCF6',
     paddingVertical: 20,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    overflow: 'hidden',
+    // shadowColor: '#000',
+    // shadowOffset: {width: 0, height: 2},
+    // shadowOpacity: 0.2,
+    // shadowRadius: 8,
+    // elevation: 4,
     marginBottom: 20,
+    borderColor: '#7BA065',
+    borderWidth: 1,
   },
   chartStyle: {
-    backgroundColor: '#F8FCF6',
+    // backgroundColor: '#F8FCF6',
     borderRadius: 16,
     marginVertical: 8,
   },
